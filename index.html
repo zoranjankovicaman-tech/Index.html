@@ -8,445 +8,298 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-/* ===== THEMES ===== */
-:root { --ff-h:'Playfair Display',Georgia,serif; --ff-b:'Source Sans 3','Segoe UI',sans-serif; }
-[data-theme="light"] {
-  --bg:#FAF5EC; --bg2:#F2E9D8; --bg3:#EBE0C9;
-  --card:#FFFFFF; --card2:#FDF9F4;
-  --text:#2A1800; --text2:#7A5C3A; --text3:#A88060;
-  --accent:#B86A00; --accent2:#D4880A;
-  --accent-bg:#FFF3E0; --accent-border:#E8B86D;
-  --border:#DDD0B8; --border2:#EAE0CC;
-  --danger:#C0392B; --danger-bg:rgba(192,57,43,.08);
-  --success:#2E7D32; --warn:#E65100; --warn-bg:rgba(230,81,0,.08);
-  --shadow:rgba(120,70,10,.10); --shadow2:rgba(120,70,10,.22);
-}
-[data-theme="dark"] {
-  --bg:#160D02; --bg2:#1E1108; --bg3:#271708;
-  --card:#231508; --card2:#2A1A0A;
-  --text:#F5EDD8; --text2:#C9A97A; --text3:#8A6A48;
-  --accent:#E89820; --accent2:#F0AE40;
-  --accent-bg:rgba(232,152,32,.12); --accent-border:#7A5010;
-  --border:#4A3018; --border2:#3A2210;
-  --danger:#E74C3C; --danger-bg:rgba(231,76,60,.12);
-  --success:#4CAF50; --warn:#FF8F00; --warn-bg:rgba(255,143,0,.12);
-  --shadow:rgba(0,0,0,.35); --shadow2:rgba(0,0,0,.55);
-}
+:root{--ff-h:'Playfair Display',Georgia,serif;--ff-b:'Source Sans 3','Segoe UI',sans-serif;}
+[data-theme="light"]{--bg:#FAF5EC;--bg2:#F2E9D8;--bg3:#EBE0C9;--card:#FFF;--card2:#FDF9F4;--text:#2A1800;--text2:#7A5C3A;--text3:#A88060;--accent:#B86A00;--accent2:#D4880A;--accent-bg:#FFF3E0;--accent-border:#E8B86D;--border:#DDD0B8;--border2:#EAE0CC;--danger:#C0392B;--danger-bg:rgba(192,57,43,.08);--success:#2E7D32;--warn:#E65100;--warn-bg:rgba(230,81,0,.08);--shadow:rgba(120,70,10,.10);--shadow2:rgba(120,70,10,.22);}
+[data-theme="dark"]{--bg:#160D02;--bg2:#1E1108;--bg3:#271708;--card:#231508;--card2:#2A1A0A;--text:#F5EDD8;--text2:#C9A97A;--text3:#8A6A48;--accent:#E89820;--accent2:#F0AE40;--accent-bg:rgba(232,152,32,.12);--accent-border:#7A5010;--border:#4A3018;--border2:#3A2210;--danger:#E74C3C;--danger-bg:rgba(231,76,60,.12);--success:#4CAF50;--warn:#FF8F00;--warn-bg:rgba(255,143,0,.12);--shadow:rgba(0,0,0,.35);--shadow2:rgba(0,0,0,.55);}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
 body{font-family:var(--ff-b);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;transition:background .3s,color .3s;font-size:15px;}
+.page{display:none;flex-direction:column;min-height:100vh;}.page.active{display:flex;}
 
-/* ===== PAGE SYSTEM ===== */
-.page{display:none;flex-direction:column;min-height:100vh;}
-.page.active{display:flex;}
+/* LOADING */
+.load-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.load-ico{font-size:3rem;animation:pulse 1.5s ease infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.load-title{font-family:var(--ff-h);font-size:1.3rem;color:var(--accent);}
+.spinner{width:30px;height:30px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-/* ===== SETUP PAGE ===== */
-.setup-wrap{max-width:520px;margin:0 auto;padding:24px 16px 40px;width:100%;}
-.setup-logo{text-align:center;padding:28px 0 20px;}
-.setup-logo .big-logo{font-size:3rem;}
-.setup-logo h1{font-family:var(--ff-h);font-size:1.6rem;color:var(--accent);margin-top:8px;}
-.setup-logo p{font-size:.82rem;color:var(--text3);margin-top:4px;}
-.setup-card{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:22px;margin-bottom:14px;box-shadow:0 2px 12px var(--shadow);}
-.setup-step{display:flex;gap:12px;margin-bottom:16px;align-items:flex-start;}
-.step-num{width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0;margin-top:1px;}
-.step-text{font-size:.85rem;line-height:1.55;color:var(--text2);}
-.step-text strong{color:var(--text);}
-.step-text a{color:var(--accent);text-decoration:none;font-weight:700;}
-.step-text a:hover{text-decoration:underline;}
-.code-snippet{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-family:monospace;font-size:.78rem;color:var(--accent2);margin-top:6px;word-break:break-all;}
-.setup-hdr{font-family:var(--ff-h);font-size:1rem;color:var(--accent);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border2);}
-textarea.cfg-input{width:100%;min-height:110px;background:var(--bg2);border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;font-family:monospace;font-size:.78rem;color:var(--text);resize:vertical;outline:none;transition:border-color .18s;}
-textarea.cfg-input:focus{border-color:var(--accent2);}
-
-/* ===== LOGIN PAGE ===== */
-.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px 16px;}
-.login-card{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 6px 30px var(--shadow2);}
-.login-logo{text-align:center;margin-bottom:24px;}
-.login-logo .ico{font-size:2.4rem;background:var(--accent-bg);width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;border:1px solid var(--accent-border);}
-.login-logo h1{font-family:var(--ff-h);font-size:1.4rem;color:var(--accent);}
-.login-logo p{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
-.frow{margin-bottom:14px;}
-.flbl{display:block;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--text3);margin-bottom:5px;}
-.pin-dots{display:flex;gap:10px;justify-content:center;margin:14px 0 6px;min-height:22px;}
+/* LOGIN */
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:18px;}
+.login-card{background:var(--card);border:1px solid var(--border2);border-radius:20px;padding:26px 22px;width:100%;max-width:370px;box-shadow:0 6px 30px var(--shadow2);}
+.login-logo{text-align:center;margin-bottom:18px;}
+.login-logo .ico{font-size:2rem;background:var(--accent-bg);width:54px;height:54px;border-radius:13px;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;border:1px solid var(--accent-border);}
+.login-logo h1{font-family:var(--ff-h);font-size:1.25rem;color:var(--accent);}
+.login-logo p{font-size:.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+.role-btns{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.role-btn{padding:10px 13px;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;cursor:pointer;font-family:var(--ff-b);font-size:.86rem;font-weight:700;color:var(--text2);text-align:left;transition:all .18s;display:flex;align-items:center;gap:8px;}
+.role-btn:hover,.role-btn.sel{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+.role-btn .rcheck{width:17px;height:17px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.65rem;transition:all .18s;margin-left:auto;}
+.role-btn.sel .rcheck{background:var(--accent);border-color:var(--accent);color:#fff;}
+.pin-dots{display:flex;gap:9px;justify-content:center;margin:11px 0 5px;min-height:20px;}
 .dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--border);background:var(--bg2);transition:all .18s;}
 .dot.filled{background:var(--accent);border-color:var(--accent);}
-.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;}
-.nk{padding:14px;background:var(--bg2);border:1.5px solid var(--border);border-radius:10px;font-size:1.2rem;font-weight:700;cursor:pointer;transition:all .18s;text-align:center;font-family:var(--ff-b);color:var(--text);}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:9px;}
+.nk{padding:12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:9px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .18s;text-align:center;font-family:var(--ff-b);color:var(--text);}
 .nk:hover{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
-.nk:active{transform:scale(.94);}
-.nk.del{font-size:.9rem;color:var(--text3);}
+.nk:active{transform:scale(.93);}
+.nk.del{font-size:.85rem;color:var(--text3);}
 .nk.empty{pointer-events:none;background:transparent;border-color:transparent;}
-.login-err{text-align:center;font-size:.8rem;color:var(--danger);min-height:20px;margin-top:6px;}
+.login-err{text-align:center;font-size:.76rem;color:var(--danger);min-height:17px;margin-top:5px;}
 
-/* ===== HEADER ===== */
-header{background:var(--card);border-bottom:2px solid var(--accent-border);padding:0 14px;height:56px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 12px var(--shadow);position:sticky;top:0;z-index:200;flex-shrink:0;}
-.hbrand{display:flex;align-items:center;gap:8px;}
-.hico{width:34px;height:34px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-.htitle{font-family:var(--ff-h);font-size:1.05rem;color:var(--accent);line-height:1.1;}
-.hsub{font-size:.62rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px;}
-.hactions{display:flex;gap:5px;align-items:center;}
-.hbtn{height:32px;padding:0 10px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:7px;color:var(--accent2);font-family:var(--ff-b);font-size:.74rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap;}
+/* HEADER */
+header{background:var(--card);border-bottom:2px solid var(--accent-border);padding:0 12px;height:52px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 12px var(--shadow);position:sticky;top:0;z-index:200;flex-shrink:0;}
+.hbrand{display:flex;align-items:center;gap:7px;}
+.hico{width:31px;height:31px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.htitle{font-family:var(--ff-h);font-size:.98rem;color:var(--accent);line-height:1.1;}
+.hsub{font-size:.58rem;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;}
+.hactions{display:flex;gap:4px;align-items:center;}
+.hbtn{height:29px;padding:0 9px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:6px;color:var(--accent2);font-family:var(--ff-b);font-size:.7rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .18s;white-space:nowrap;}
 .hbtn:hover{background:var(--accent);color:#fff;}
-.hbtn.ico{padding:0;width:32px;justify-content:center;font-size:.95rem;}
+.hbtn.ico{padding:0;width:29px;justify-content:center;}
 
-/* ===== MAIN LAYOUT ===== */
-.main{flex:1;max-width:680px;margin:0 auto;width:100%;padding:12px 12px 24px;display:flex;flex-direction:column;gap:11px;}
+/* LAYOUT */
+.main{flex:1;max-width:680px;margin:0 auto;width:100%;padding:11px 11px 22px;display:flex;flex-direction:column;gap:10px;}
+.adm-main{flex:1;max-width:780px;margin:0 auto;width:100%;padding:11px 11px 22px;display:flex;flex-direction:column;gap:10px;}
 
-/* ===== CARD ===== */
-.card{background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:16px 16px 18px;box-shadow:0 2px 10px var(--shadow);}
-.card-hdr{font-family:var(--ff-h);font-size:.78rem;text-transform:uppercase;letter-spacing:1.6px;color:var(--accent);padding-bottom:11px;border-bottom:1px solid var(--border2);margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border2);border-radius:13px;padding:14px 14px 16px;box-shadow:0 2px 10px var(--shadow);}
+.card-hdr{font-family:var(--ff-h);font-size:.76rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);padding-bottom:10px;border-bottom:1px solid var(--border2);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
 
-/* ===== WIZARD STEPS ===== */
-.steps-row{display:flex;gap:4px;margin-bottom:12px;}
+/* WIZARD */
+.steps-row{display:flex;gap:4px;margin-bottom:11px;}
 .step-seg{flex:1;height:4px;border-radius:3px;background:var(--border2);transition:background .3s;}
 .step-seg.active{background:var(--accent);}
 .step-seg.done{background:var(--success);}
-.step-label{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:7px;}
-.item-chip{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:7px 11px;margin-bottom:12px;font-size:.8rem;color:var(--text2);display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-.chip-val{font-family:monospace;font-size:.92rem;font-weight:700;color:var(--text);}
+.step-label{font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--text3);margin-bottom:6px;}
+.item-chip{background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:6px 10px;margin-bottom:10px;font-size:.78rem;color:var(--text2);display:flex;gap:9px;flex-wrap:wrap;align-items:center;}
+.chip-val{font-family:monospace;font-size:.88rem;font-weight:700;color:var(--text);}
 
-/* ===== INPUTS ===== */
+/* INPUTS */
 .inp-row{display:flex;gap:7px;margin-bottom:9px;}
-input[type="text"],input[type="date"],select,textarea{width:100%;padding:10px 13px;background:var(--bg2);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--ff-b);font-size:.93rem;outline:none;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none;}
+input[type="text"],input[type="date"],input[type="email"],select,textarea{width:100%;padding:10px 12px;background:var(--bg2);border:1.5px solid var(--border);border-radius:9px;color:var(--text);font-family:var(--ff-b);font-size:.9rem;outline:none;transition:border-color .18s,box-shadow .18s;-webkit-appearance:none;}
 input:focus,select:focus,textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(200,140,20,.13);}
 input[type="date"]::-webkit-calendar-picker-indicator{cursor:pointer;filter:sepia(1) saturate(2) hue-rotate(-10deg) brightness(.7);}
 [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(.5) saturate(2);}
-select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23B86A00'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px;cursor:pointer;}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23B86A00'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer;}
 [data-theme="dark"] select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23E89820'/%3E%3C/svg%3E");}
 
-/* ===== BUTTONS ===== */
-.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 16px;border:none;border-radius:9px;font-family:var(--ff-b);font-size:.88rem;font-weight:700;cursor:pointer;transition:all .18s;line-height:1;}
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 14px;border:none;border-radius:9px;font-family:var(--ff-b);font-size:.85rem;font-weight:700;cursor:pointer;transition:all .18s;line-height:1;}
 .btn:active{transform:scale(.97);}
 .btn-primary{background:var(--accent);color:#fff;}
-.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 12px var(--shadow2);}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);}
 .btn-ghost{background:var(--bg2);color:var(--text2);border:1.5px solid var(--border);}
 .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:var(--danger);color:#fff;}
 .btn-no{background:var(--danger);color:#fff;flex:1;}
-.btn-no:hover{filter:brightness(1.1);}
 .btn-yes{background:var(--success);color:#fff;flex:1;}
-.btn-yes:hover{filter:brightness(1.1);}
-.btn-scan{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:10px 14px;font-size:1.05rem;cursor:pointer;flex-shrink:0;transition:all .18s;}
+.btn-scan{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:10px 13px;font-size:1rem;cursor:pointer;flex-shrink:0;transition:all .18s;}
 .btn-scan:hover{background:var(--accent2);}
-.btn-row{display:flex;gap:9px;}
+.btn-row{display:flex;gap:8px;}
 .btn-full{width:100%;}
-.mt8{margin-top:8px;}
-.mt12{margin-top:12px;}
-.mb12{margin-bottom:12px;}
+.mt8{margin-top:8px;}.mt12{margin-top:12px;}
 
-/* ===== STATS ===== */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
-.stat-box{background:var(--card);border:1px solid var(--border2);border-radius:11px;padding:10px 6px;text-align:center;box-shadow:0 1px 6px var(--shadow);}
-.stat-n{font-family:var(--ff-h);font-size:1.6rem;line-height:1;color:var(--accent);}
-.stat-lbl{font-size:.63rem;text-transform:uppercase;letter-spacing:.9px;color:var(--text3);margin-top:3px;}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.stat-box{background:var(--card);border:1px solid var(--border2);border-radius:11px;padding:9px 6px;text-align:center;box-shadow:0 1px 6px var(--shadow);}
+.stat-n{font-family:var(--ff-h);font-size:1.45rem;line-height:1;color:var(--accent);}
+.stat-lbl{font-size:.61rem;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-top:3px;}
 
-/* ===== LIST ===== */
-.filter-row{display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap;}
-.fbtn{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text3);font-size:.71rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;cursor:pointer;transition:all .18s;font-family:var(--ff-b);}
+/* ADMIN GRID */
+.trn-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;}
+.trn-card{background:var(--card);border:1.5px solid var(--border2);border-radius:12px;padding:12px;cursor:pointer;transition:all .18s;box-shadow:0 2px 8px var(--shadow);}
+.trn-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 5px 16px var(--shadow2);}
+.tc-name{font-family:var(--ff-h);font-size:.98rem;color:var(--accent);margin-bottom:7px;}
+.tc-stats{display:flex;flex-wrap:wrap;gap:8px;}
+.tc-s{font-size:.72rem;color:var(--text2);}
+.tc-s span{font-weight:700;color:var(--text);}
+.tc-warn{color:var(--danger)!important;}
+
+/* LIST */
+.filter-row{display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap;}
+.fbtn{padding:4px 11px;border-radius:20px;border:1px solid var(--border);background:var(--bg2);color:var(--text3);font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;transition:all .18s;font-family:var(--ff-b);}
 .fbtn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
 .fbtn:hover:not(.on){border-color:var(--accent);color:var(--accent);}
-.list-wrap{overflow-y:auto;max-height:250px;}
+.list-wrap{overflow-y:auto;max-height:240px;}
 .list-wrap::-webkit-scrollbar{width:4px;}
 .list-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-.item-row{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:9px;border:1px solid var(--border2);background:var(--card2);margin-bottom:5px;cursor:pointer;transition:all .18s;}
+.item-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:9px;border:1px solid var(--border2);background:var(--card2);margin-bottom:5px;cursor:pointer;transition:all .18s;}
 .item-row:hover{border-color:var(--accent);background:var(--accent-bg);}
 .item-row.expired{border-color:var(--danger);background:var(--danger-bg);}
 .item-row.expiring{border-color:var(--warn);background:var(--warn-bg);}
-.item-bc{font-family:'Courier New',monospace;font-size:.86rem;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.item-dt{font-size:.76rem;color:var(--text2);white-space:nowrap;}
-.badge{font-size:.63rem;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;text-transform:uppercase;letter-spacing:.3px;}
+.item-row.ro{cursor:default;}
+.item-bc{font-family:'Courier New',monospace;font-size:.84rem;font-weight:700;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.item-dt{font-size:.74rem;color:var(--text2);white-space:nowrap;}
+.badge{font-size:.61rem;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap;text-transform:uppercase;}
 .badge-d{background:var(--warn);color:#fff;}
 .badge-n{background:var(--border2);color:var(--text3);}
-.empty-state{text-align:center;padding:26px 16px;color:var(--text3);font-size:.83rem;}
-.empty-icon{font-size:2rem;margin-bottom:7px;}
-.sync-badge{font-size:.68rem;color:var(--success);display:flex;align-items:center;gap:4px;margin-bottom:8px;}
+.empty-state{text-align:center;padding:24px 14px;color:var(--text3);font-size:.8rem;}
+.empty-ico{font-size:1.9rem;margin-bottom:7px;}
+.sync-badge{font-size:.66rem;color:var(--success);display:flex;align-items:center;gap:4px;margin-bottom:7px;}
 .sync-badge.off{color:var(--warn);}
 
-/* ===== ADMIN ===== */
-.admin-main{flex:1;max-width:760px;margin:0 auto;width:100%;padding:12px 12px 24px;display:flex;flex-direction:column;gap:11px;}
-.admin-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-.store-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
-.store-card{background:var(--card);border:1.5px solid var(--border2);border-radius:13px;padding:14px;cursor:pointer;transition:all .18s;box-shadow:0 2px 8px var(--shadow);}
-.store-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 5px 16px var(--shadow2);}
-.sc-name{font-family:var(--ff-h);font-size:1.05rem;color:var(--accent);margin-bottom:8px;}
-.sc-stats{display:flex;gap:10px;flex-wrap:wrap;}
-.sc-stat{font-size:.76rem;color:var(--text2);}
-.sc-stat span{font-weight:700;color:var(--text);}
-.sc-warn{color:var(--danger) !important;}
-.admin-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:10px;}
+/* CONFIG LIST */
+.cfg-list{display:flex;flex-direction:column;gap:6px;max-height:350px;overflow-y:auto;}
+.cfg-row{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--card2);border:1px solid var(--border2);border-radius:9px;}
+.cfg-row-main{flex:1;min-width:0;}
+.cfg-row-name{font-weight:700;font-size:.86rem;color:var(--text);}
+.cfg-row-sub{font-size:.7rem;color:var(--text3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cfg-actions{display:flex;gap:5px;flex-shrink:0;}
+.cfg-btn{width:27px;height:27px;border:1px solid var(--border);background:var(--bg2);border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.82rem;transition:all .18s;}
+.cfg-btn:hover{border-color:var(--accent);background:var(--accent-bg);}
+.cfg-btn.del:hover{border-color:var(--danger);background:var(--danger-bg);}
 
-/* ===== MODAL/OVERLAY ===== */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:center;justify-content:center;padding:14px;backdrop-filter:blur(3px);}
+/* TABS */
+.tab-row{display:flex;gap:6px;margin-bottom:12px;}
+.tab-btn{flex:1;padding:8px;background:var(--bg2);border:1.5px solid var(--border);border-radius:9px;font-family:var(--ff-b);font-size:.8rem;font-weight:700;cursor:pointer;text-align:center;transition:all .18s;color:var(--text2);}
+.tab-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* OVERLAY/MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;display:none;align-items:center;justify-content:center;padding:12px;backdrop-filter:blur(3px);}
 .overlay.open{display:flex;}
-.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 20px 18px;width:100%;max-width:460px;box-shadow:0 8px 40px var(--shadow2);max-height:90vh;overflow-y:auto;}
-.modal-title{font-family:var(--ff-h);font-size:1.1rem;color:var(--accent);margin-bottom:14px;padding-bottom:9px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:7px;}
-.modal-wide{max-width:640px;}
-.frow{margin-bottom:12px;}
-.export-opts{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;}
-.exp-opt{padding:12px 14px;border:1.5px solid var(--border2);border-radius:10px;cursor:pointer;transition:all .18s;background:var(--card2);}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:15px;padding:18px 18px 16px;width:100%;max-width:450px;box-shadow:0 8px 40px var(--shadow2);max-height:92vh;overflow-y:auto;}
+.modal-wide{max-width:560px;}
+.modal-title{font-family:var(--ff-h);font-size:1.02rem;color:var(--accent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border2);display:flex;align-items:center;gap:7px;}
+.frow{margin-bottom:11px;}
+.flbl{display:block;font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--text3);margin-bottom:5px;}
+.exp-opts{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.exp-opt{padding:10px 12px;border:1.5px solid var(--border2);border-radius:9px;cursor:pointer;transition:all .18s;background:var(--card2);}
 .exp-opt:hover,.exp-opt.on{border-color:var(--accent);background:var(--accent-bg);}
-.exp-opt-t{font-weight:700;font-size:.86rem;margin-bottom:3px;}
-.exp-opt-d{font-size:.73rem;color:var(--text3);}
-.code-block{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px;font-family:monospace;font-size:.72rem;color:var(--text2);overflow-x:auto;white-space:pre;max-height:340px;overflow-y:auto;line-height:1.5;}
-
-/* ===== CAMERA ===== */
+.exp-opt-t{font-weight:700;font-size:.83rem;margin-bottom:2px;}
+.exp-opt-d{font-size:.7rem;color:var(--text3);}
+.code-block{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:monospace;font-size:.68rem;color:var(--text2);overflow-x:auto;white-space:pre;max-height:300px;overflow-y:auto;line-height:1.5;}
+.divider{border:none;border-top:1px solid var(--border2);margin:9px 0;}
+.hidden{display:none!important;}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block;}
+.online-dot.off{background:var(--warn);}
 #cam-overlay{background:rgba(0,0,0,.9);}
-.cam-box{background:#111;border-radius:16px;padding:16px;width:100%;max-width:480px;position:relative;text-align:center;}
-.cam-status{color:#ccc;padding:10px 0 4px;font-size:.85rem;}
-.cam-sub{color:#888;font-size:.78rem;}
-
-/* ===== TOAST ===== */
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:30px;font-size:.86rem;font-weight:600;z-index:1000;transition:transform .28s cubic-bezier(.34,1.56,.64,1);max-width:92%;text-align:center;pointer-events:none;box-shadow:0 4px 20px var(--shadow2);}
+.cam-box{background:#111;border-radius:14px;padding:18px;width:100%;max-width:400px;text-align:center;}
+.cam-status{color:#ccc;padding:8px 0 3px;font-size:.82rem;}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--text);color:var(--bg);padding:10px 20px;border-radius:30px;font-size:.84rem;font-weight:600;z-index:1000;transition:transform .28s cubic-bezier(.34,1.56,.64,1);max-width:92%;text-align:center;pointer-events:none;box-shadow:0 4px 20px var(--shadow2);}
 #toast.show{transform:translateX(-50%) translateY(0);}
 #toast.ok{background:var(--success);color:#fff;}
 #toast.err{background:var(--danger);color:#fff;}
-
-/* ===== ONLINE INDICATOR ===== */
-.online-dot{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;margin-right:4px;}
-.online-dot.off{background:var(--warn);}
-
-/* ===== MISC ===== */
 @keyframes fadeSlide{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .anim{animation:fadeSlide .2s ease both;}
-.hidden{display:none!important;}
-.divider{border:none;border-top:1px solid var(--border2);margin:10px 0;}
-@media(max-width:480px){
-  .main,.admin-main{padding:9px 9px 18px;}
-  .card{padding:13px 13px 15px;}
-  .admin-stats{grid-template-columns:repeat(2,1fr);}
-  header{padding:0 10px;}
-  .htitle{font-size:.92rem;}
-  .hbtn span{display:none;}
-  .hbtn{padding:0 8px;}
-}
+@media(max-width:480px){.main,.adm-main{padding:8px 8px 16px;}.card{padding:12px 12px 13px;}.trn-grid{grid-template-columns:1fr;}.stats4{grid-template-columns:repeat(2,1fr);}header{padding:0 9px;}.htitle{font-size:.88rem;}.hbtn span{display:none;}.hbtn{padding:0 7px;}}
 </style>
 </head>
 <body>
 
-<!-- ===================== PAGE: SETUP ===================== -->
-<div id="page-setup" class="page" style="display:none">
-<div class="setup-wrap">
-  <div class="setup-logo">
-    <div class="big-logo">📋</div>
-    <h1>Knjiga Rokova</h1>
-    <p>Aman — Podešavanje Firebase baze</p>
-  </div>
-
-  <div class="setup-card">
-    <div class="setup-hdr">🔧 Jednokratno podešavanje — Firebase baza podataka</div>
-    <div class="setup-step">
-      <div class="step-num">1</div>
-      <div class="step-text">Otvorite <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a> i prijavite se Google nalogom</div>
-    </div>
-    <div class="setup-step">
-      <div class="step-num">2</div>
-      <div class="step-text">Kliknite <strong>"Add project"</strong> → naziv projekta: <strong>knjiga-rokova-aman</strong> → Continue → Continue → Create project</div>
-    </div>
-    <div class="setup-step">
-      <div class="step-num">3</div>
-      <div class="step-text">U lijevom meniju kliknite <strong>"Realtime Database"</strong> → <strong>"Create Database"</strong> → Izaberite <strong>Europe (belgium)</strong> → <strong>"Start in test mode"</strong> → Enable</div>
-    </div>
-    <div class="setup-step">
-      <div class="step-num">4</div>
-      <div class="step-text">Kliknite na <strong>zupčanik (⚙️) → Project settings</strong> → tab <strong>"Your apps"</strong> → ikona <strong>&lt;/&gt;</strong> (web) → App nickname: <strong>knjiga-rokova</strong> → <strong>Register app</strong></div>
-    </div>
-    <div class="setup-step">
-      <div class="step-num">5</div>
-      <div class="step-text">Vidjet ćete kod koji počinje sa <strong>const firebaseConfig = { ... }</strong>. Kopirajte sve unutar vitičastih zagrada <strong>{ ... }</strong> uključujući i same zagrade i nalijepite dolje.</div>
-    </div>
-    <div class="setup-step">
-      <div class="step-num">6</div>
-      <div class="step-text">U Firebase konzoli → <strong>Realtime Database → Rules</strong> → zamijenite sadržaj sa:
-        <div class="code-snippet">{ "rules": { ".read": true, ".write": true } }</div>
-        Kliknite <strong>Publish</strong>
-      </div>
-    </div>
-  </div>
-
-  <div class="setup-card">
-    <div class="setup-hdr">📋 Nalijepite Firebase konfiguraciju</div>
-    <div class="frow">
-      <label class="flbl">Firebase config (kopirajte cijeli objekat sa { })</label>
-      <textarea class="cfg-input" id="fb-config-input" placeholder='Primjer:
-{
-  "apiKey": "AIzaSy...",
-  "authDomain": "knjiga-rokova-aman.firebaseapp.com",
-  "databaseURL": "https://knjiga-rokova-aman-default-rtdb.europe-west1.firebasedatabase.app",
-  "projectId": "knjiga-rokova-aman",
-  "storageBucket": "knjiga-rokova-aman.appspot.com",
-  "messagingSenderId": "123456789",
-  "appId": "1:123456789:web:abc123"
-}'></textarea>
-    </div>
-    <button class="btn btn-primary btn-full" onclick="Setup.save()">✓ Sačuvaj i pokreni aplikaciju</button>
-    <div id="setup-err" style="color:var(--danger);font-size:.8rem;margin-top:8px;min-height:18px;"></div>
-  </div>
+<!-- LOADING -->
+<div id="page-loading" class="page active">
+<div class="load-screen">
+  <div class="load-ico">📋</div>
+  <div class="load-title">Knjiga Rokova</div>
+  <div class="spinner"></div>
+  <div style="font-size:.78rem;color:var(--text3)" id="load-msg">Učitavam konfiguraciju...</div>
 </div>
 </div>
 
-<!-- ===================== PAGE: LOGIN ===================== -->
+<!-- LOGIN -->
 <div id="page-login" class="page">
 <div class="login-wrap">
-  <div class="login-card">
-    <div class="login-logo">
-      <div class="ico">📋</div>
-      <h1>Knjiga Rokova</h1>
-      <p>Aman maloprodaja</p>
+<div class="login-card">
+  <div class="login-logo">
+    <div class="ico">📋</div>
+    <h1>Knjiga Rokova</h1>
+    <p>Aman maloprodaja</p>
+  </div>
+  <div class="role-btns">
+    <button class="role-btn" id="rb-super" onclick="Login.setRole('super')">
+      <span>🔐</span><span style="flex:1">Super Admin</span><span class="rcheck" id="rc-super"></span>
+    </button>
+    <button class="role-btn" id="rb-terrain" onclick="Login.setRole('terrain')">
+      <span>🏔️</span><span style="flex:1">Teren Admin</span><span class="rcheck" id="rc-terrain"></span>
+    </button>
+    <button class="role-btn" id="rb-store" onclick="Login.setRole('store')">
+      <span>🏪</span><span style="flex:1">Objekat</span><span class="rcheck" id="rc-store"></span>
+    </button>
+  </div>
+  <div class="frow hidden" id="lr-terrain">
+    <label class="flbl">Teren</label>
+    <select id="ls-terrain" onchange="Login.onTerrainChange()"><option value="">— Izaberite teren —</option></select>
+  </div>
+  <div class="frow hidden" id="lr-store">
+    <label class="flbl">Objekat</label>
+    <select id="ls-store" onchange="Login.onStoreChange()"><option value="">— Izaberite objekat —</option></select>
+  </div>
+  <div class="frow hidden" id="pin-section">
+    <label class="flbl">PIN</label>
+    <div class="pin-dots" id="pin-dots"></div>
+    <div class="numpad">
+      <button class="nk" onclick="Login.key('1')">1</button><button class="nk" onclick="Login.key('2')">2</button><button class="nk" onclick="Login.key('3')">3</button>
+      <button class="nk" onclick="Login.key('4')">4</button><button class="nk" onclick="Login.key('5')">5</button><button class="nk" onclick="Login.key('6')">6</button>
+      <button class="nk" onclick="Login.key('7')">7</button><button class="nk" onclick="Login.key('8')">8</button><button class="nk" onclick="Login.key('9')">9</button>
+      <button class="nk empty"></button><button class="nk" onclick="Login.key('0')">0</button><button class="nk del" onclick="Login.del()">⌫</button>
     </div>
-
-    <div class="frow">
-      <label class="flbl">Odaberite prodavnicu</label>
-      <select id="login-store" onchange="Login.onStoreChange()">
-        <option value="">— Izaberite —</option>
-        <option value="__admin__">🔐 Admin</option>
-        <optgroup label="Prodavnice">
-          <option value="aman-178">Aman 178</option>
-          <option value="aman-225">Aman 225</option>
-          <option value="aman-266">Aman 266</option>
-          <option value="aman-274">Aman 274</option>
-          <option value="aman-296">Aman 296</option>
-          <option value="aman-311">Aman 311</option>
-          <option value="aman-324">Aman 324</option>
-          <option value="aman-329">Aman 329</option>
-          <option value="aman-335">Aman 335</option>
-          <option value="aman-347">Aman 347</option>
-        </optgroup>
-      </select>
-    </div>
-
-    <div class="frow" id="pin-section" style="display:none">
-      <label class="flbl">PIN</label>
-      <div class="pin-dots" id="pin-dots"></div>
-      <div class="numpad">
-        <button class="nk" onclick="Login.key('1')">1</button>
-        <button class="nk" onclick="Login.key('2')">2</button>
-        <button class="nk" onclick="Login.key('3')">3</button>
-        <button class="nk" onclick="Login.key('4')">4</button>
-        <button class="nk" onclick="Login.key('5')">5</button>
-        <button class="nk" onclick="Login.key('6')">6</button>
-        <button class="nk" onclick="Login.key('7')">7</button>
-        <button class="nk" onclick="Login.key('8')">8</button>
-        <button class="nk" onclick="Login.key('9')">9</button>
-        <button class="nk empty"></button>
-        <button class="nk" onclick="Login.key('0')">0</button>
-        <button class="nk del" onclick="Login.del()">⌫</button>
-      </div>
-      <button class="btn btn-primary btn-full" id="login-submit-btn"
-              style="display:none;margin-top:12px;padding:14px"
-              onclick="Login._attempt()">✓ Prijavi se</button>
-      <div class="login-err" id="login-err"></div>
-    </div>
-
-    <div style="margin-top:10px;text-align:center;">
-      <button class="hbtn ico" onclick="UI.toggleTheme()" style="margin:0 auto;display:flex;" title="Tema">🌙</button>
-    </div>
+    <button class="btn btn-primary btn-full mt8" id="login-btn" style="display:none;padding:13px" onclick="Login.attempt()">✓ Prijavi se</button>
+    <div class="login-err" id="login-err"></div>
+  </div>
+  <div style="margin-top:10px;text-align:center">
+    <button class="hbtn ico" onclick="UI.toggleTheme()" style="margin:0 auto;display:flex">🌙</button>
   </div>
 </div>
 </div>
+</div>
 
-<!-- ===================== PAGE: APP ===================== -->
+<!-- APP (STORE) -->
 <div id="page-app" class="page">
 <header>
   <div class="hbrand">
     <div class="hico">📋</div>
-    <div>
-      <div class="htitle" id="app-store-name">Aman</div>
-      <div class="hsub">Knjiga Rokova</div>
-    </div>
+    <div><div class="htitle" id="app-store-name">Objekat</div><div class="hsub" id="app-terrain-name">Knjiga Rokova</div></div>
   </div>
   <div class="hactions">
-    <div id="sync-indicator" title="Status veze" style="display:flex;align-items:center;font-size:.7rem;color:var(--text3);gap:3px;">
-      <span class="online-dot off" id="sync-dot"></span>
-    </div>
+    <span class="online-dot off" id="sync-dot" title="Veza"></span>
     <button class="hbtn" onclick="UI.openExport()">📊 <span>Izvoz</span></button>
     <button class="hbtn" onclick="UI.openBackup()">💾 <span>Backup</span></button>
-    <button class="hbtn ico" onclick="UI.toggleTheme()" title="Tema">🌙</button>
-    <button class="hbtn ico" onclick="Auth.logout()" title="Odjava">🚪</button>
+    <button class="hbtn ico" onclick="UI.toggleTheme()">🌙</button>
+    <button class="hbtn ico" onclick="Auth.logout()">🚪</button>
   </div>
 </header>
-
 <div class="main">
-  <!-- INPUT CARD -->
   <div class="card">
     <div class="card-hdr">📥 Novi unos artikla</div>
-    <div class="steps-row">
-      <div class="step-seg active" id="seg1"></div>
-      <div class="step-seg" id="seg2"></div>
-      <div class="step-seg" id="seg3"></div>
-      <div class="step-seg" id="seg4"></div>
-    </div>
-
-    <!-- Step 1: Barcode -->
+    <div class="steps-row"><div class="step-seg active" id="seg1"></div><div class="step-seg" id="seg2"></div><div class="step-seg" id="seg3"></div><div class="step-seg" id="seg4"></div></div>
     <div id="s1">
       <div class="step-label">Korak 1 — Barkod artikla</div>
       <div class="inp-row">
-        <input type="text" id="bc-input" placeholder="Skeniraj ili unesi barkod..."
-               inputmode="numeric" pattern="[0-9]*"
-               autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-               onkeydown="if(event.key==='Enter') Steps.confirmBarcode()">
+        <input type="text" id="bc-input" placeholder="Skeniraj ili unesi barkod..." inputmode="numeric" pattern="[0-9]*" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" onkeydown="if(event.key==='Enter')Steps.confirmBarcode()">
         <button class="btn-scan" onclick="Cam.open()">📷</button>
       </div>
       <button class="btn btn-primary btn-full" onclick="Steps.confirmBarcode()">✓ Potvrdi barkod</button>
     </div>
-
-    <!-- Step 2: Date -->
     <div id="s2" class="hidden anim">
       <div class="item-chip"><span>Barkod:</span><span class="chip-val" id="chip-bc"></span></div>
       <div class="step-label">Korak 2 — Datum isteka roka</div>
-      <input type="date" id="exp-date" style="margin-bottom:11px">
+      <input type="date" id="exp-date" style="margin-bottom:10px">
       <button class="btn btn-primary btn-full" onclick="Steps.confirmDate()">✓ Potvrdi datum</button>
       <button class="btn btn-ghost btn-full mt8" onclick="Steps.go(1)">← Nazad</button>
     </div>
-
-    <!-- Step 3: Discount Y/N -->
     <div id="s3" class="hidden anim">
-      <div class="item-chip">
-        <span>Barkod:</span><span class="chip-val" id="chip-bc2"></span>
-        <span style="color:var(--border)">|</span>
-        <span>Ističe:</span><span class="chip-val" id="chip-dt"></span>
-      </div>
+      <div class="item-chip"><span>Barkod:</span><span class="chip-val" id="chip-bc2"></span><span style="color:var(--border)">|</span><span>Ističe:</span><span class="chip-val" id="chip-dt"></span></div>
       <div class="step-label">Korak 3 — Sniženje pred istek?</div>
-      <div class="btn-row">
-        <button class="btn btn-no" onclick="Steps.setDiscount(false)">✗ Sniženje NE</button>
-        <button class="btn btn-yes" onclick="Steps.setDiscount(true)">✓ Sniženje DA</button>
-      </div>
+      <div class="btn-row"><button class="btn btn-no" onclick="Steps.setDiscount(false)">✗ Sniženje NE</button><button class="btn btn-yes" onclick="Steps.setDiscount(true)">✓ Sniženje DA</button></div>
       <button class="btn btn-ghost btn-full mt8" onclick="Steps.go(2)">← Nazad</button>
     </div>
-
-    <!-- Step 4: Discount days -->
     <div id="s4" class="hidden anim">
-      <div class="item-chip">
-        <span>Barkod:</span><span class="chip-val" id="chip-bc3"></span>
-        <span style="color:var(--border)">|</span>
-        <span>Ističe:</span><span class="chip-val" id="chip-dt2"></span>
-      </div>
-      <div class="step-label">Korak 4 — Broj dana sniženja prije isteka</div>
-      <select id="disc-days" style="margin-bottom:12px">
-        <option value="">— Izaberite broj dana —</option>
-        <option value="5">5 dana prije isteka</option>
-        <option value="7">7 dana prije isteka</option>
-        <option value="15">15 dana prije isteka</option>
-        <option value="20">20 dana prije isteka</option>
-        <option value="30">30 dana prije isteka</option>
-      </select>
+      <div class="item-chip"><span>Barkod:</span><span class="chip-val" id="chip-bc3"></span><span style="color:var(--border)">|</span><span>Ističe:</span><span class="chip-val" id="chip-dt2"></span></div>
+      <div class="step-label">Korak 4 — Broj dana sniženja</div>
+      <select id="disc-days" style="margin-bottom:10px"><option value="">— Izaberite broj dana —</option><option value="5">5 dana</option><option value="7">7 dana</option><option value="15">15 dana</option><option value="20">20 dana</option><option value="30">30 dana</option></select>
       <button class="btn btn-primary btn-full" onclick="Steps.confirmDays()">✓ Sačuvaj i nastavi</button>
       <button class="btn btn-ghost btn-full mt8" onclick="Steps.go(3)">← Nazad</button>
     </div>
   </div>
-
-  <!-- STATS -->
   <div class="stats">
     <div class="stat-box"><div class="stat-n" id="sn-total">0</div><div class="stat-lbl">Ukupno</div></div>
     <div class="stat-box"><div class="stat-n" id="sn-disc" style="color:var(--warn)">0</div><div class="stat-lbl">Sa snižnjem</div></div>
     <div class="stat-box"><div class="stat-n" id="sn-today" style="color:var(--danger)">0</div><div class="stat-lbl">Iste danas</div></div>
   </div>
-
-  <!-- LIST -->
   <div class="card">
     <div class="card-hdr">📦 Unesene stavke</div>
-    <div id="sync-status" class="sync-badge off hidden">
-      <span class="online-dot off" id="sync-dot2"></span>
-      <span id="sync-text">Offline — lokalni podaci</span>
-    </div>
+    <div id="sync-status" class="sync-badge off hidden"><span class="online-dot off" id="sync-dot2"></span><span id="sync-text">Offline</span></div>
     <div class="filter-row">
       <button class="fbtn on" onclick="List.filter('all',this)">Sve</button>
       <button class="fbtn" onclick="List.filter('discount',this)">Sniženje</button>
@@ -458,1156 +311,718 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 </div>
 </div>
 
-<!-- ===================== PAGE: ADMIN ===================== -->
-<div id="page-admin" class="page">
+<!-- SUPER ADMIN -->
+<div id="page-super" class="page">
 <header>
-  <div class="hbrand">
-    <div class="hico">🔐</div>
-    <div>
-      <div class="htitle">ADMIN</div>
-      <div class="hsub">Knjiga Rokova — Aman</div>
-    </div>
-  </div>
+  <div class="hbrand"><div class="hico">🔐</div><div><div class="htitle">SUPER ADMIN</div><div class="hsub">Aman — Knjiga Rokova</div></div></div>
   <div class="hactions">
-    <button class="hbtn" onclick="Admin.refresh()">🔄 <span>Osvježi</span></button>
-    <button class="hbtn" onclick="UI.openEmailScript()">📧 <span>Email</span></button>
+    <button class="hbtn" onclick="CfgMgr.open()">⚙️ <span>Podešavanja</span></button>
+    <button class="hbtn" onclick="SuperAdmin.refresh()">🔄 <span>Osvježi</span></button>
     <button class="hbtn" onclick="UI.openAdminExport()">📊 <span>Izvoz</span></button>
+    <button class="hbtn" onclick="UI.openEmailScript()">📧 <span>Email</span></button>
     <button class="hbtn ico" onclick="UI.toggleTheme()">🌙</button>
     <button class="hbtn ico" onclick="Auth.logout()">🚪</button>
   </div>
 </header>
-
-<div class="admin-main">
-  <!-- Global stats -->
-  <div class="admin-stats" id="admin-global-stats">
-    <div class="stat-box"><div class="stat-n" id="as-total">—</div><div class="stat-lbl">Ukupno stavki</div></div>
-    <div class="stat-box"><div class="stat-n" id="as-disc" style="color:var(--warn)">—</div><div class="stat-lbl">Sa snižnjem</div></div>
-    <div class="stat-box"><div class="stat-n" id="as-today" style="color:var(--danger)">—</div><div class="stat-lbl">Iste danas</div></div>
-    <div class="stat-box"><div class="stat-n" id="as-stores" style="color:var(--success)">10</div><div class="stat-lbl">Prodavnica</div></div>
+<div class="adm-main">
+  <div class="stats4">
+    <div class="stat-box"><div class="stat-n" id="sa-trn">0</div><div class="stat-lbl">Terena</div></div>
+    <div class="stat-box"><div class="stat-n" id="sa-str">0</div><div class="stat-lbl">Objekata</div></div>
+    <div class="stat-box"><div class="stat-n" id="sa-tot" style="color:var(--accent)">0</div><div class="stat-lbl">Ukupno stavki</div></div>
+    <div class="stat-box"><div class="stat-n" id="sa-tod" style="color:var(--danger)">0</div><div class="stat-lbl">Iste danas</div></div>
   </div>
-
-  <!-- Store grid -->
   <div class="card">
-    <div class="card-hdr">🏪 Pregled po prodavnicama</div>
-    <div class="store-grid" id="store-grid">
-      <div class="empty-state"><div class="empty-icon">⏳</div>Učitavam podatke...</div>
-    </div>
+    <div class="card-hdr">🏔️ Pregled po terenima</div>
+    <div class="trn-grid" id="sa-grid"><div class="empty-state"><div class="spinner"></div></div></div>
   </div>
 </div>
 </div>
 
-<!-- ===================== OVERLAYS ===================== -->
+<!-- TERRAIN ADMIN -->
+<div id="page-terrain" class="page">
+<header>
+  <div class="hbrand"><div class="hico">🏔️</div><div><div class="htitle" id="ta-name">Teren</div><div class="hsub">Knjiga Rokova</div></div></div>
+  <div class="hactions">
+    <button class="hbtn" onclick="TerrainAdmin.refresh()">🔄 <span>Osvježi</span></button>
+    <button class="hbtn" onclick="UI.openTerrainExport()">📊 <span>Izvoz</span></button>
+    <button class="hbtn ico" onclick="UI.toggleTheme()">🌙</button>
+    <button class="hbtn ico" onclick="Auth.logout()">🚪</button>
+  </div>
+</header>
+<div class="adm-main">
+  <div class="stats4">
+    <div class="stat-box"><div class="stat-n" id="ta-str">0</div><div class="stat-lbl">Objekata</div></div>
+    <div class="stat-box"><div class="stat-n" id="ta-tot" style="color:var(--accent)">0</div><div class="stat-lbl">Ukupno stavki</div></div>
+    <div class="stat-box"><div class="stat-n" id="ta-tod" style="color:var(--danger)">0</div><div class="stat-lbl">Iste danas</div></div>
+    <div class="stat-box"><div class="stat-n" id="ta-disc" style="color:var(--warn)">0</div><div class="stat-lbl">Sa snižnjem</div></div>
+  </div>
+  <div class="card">
+    <div class="card-hdr">🏪 Objekti terena</div>
+    <div class="trn-grid" id="ta-grid"><div class="empty-state"><div class="spinner"></div></div></div>
+  </div>
+</div>
+</div>
 
-<!-- Camera -->
+<!-- OVERLAYS -->
 <input type="file" id="cam-input" accept="image/*" capture="environment" style="display:none" onchange="Cam.processImage(event)">
-<div class="overlay" id="cam-overlay">
-  <div class="cam-box">
-    <div style="font-size:2.5rem;margin-bottom:12px;">📷</div>
-    <div id="cam-status" class="cam-status">Čitanje barkoda...</div>
-    <div id="cam-sub" class="cam-sub">Molimo sačekajte</div>
-  </div>
-</div>
+<div class="overlay" id="cam-overlay"><div class="cam-box"><div style="font-size:2.4rem;margin-bottom:10px">📷</div><div id="cam-status" class="cam-status">Čitanje barkoda...</div><div style="color:#888;font-size:.75rem" id="cam-sub">Molimo sačekajte</div></div></div>
 
-<!-- Export -->
+<!-- Export store -->
 <div class="overlay" id="exp-overlay">
-  <div class="modal">
-    <div class="modal-title">📊 Izvoz u Excel</div>
-    <div class="export-opts">
-      <div class="exp-opt on" id="eo-expiry" onclick="Export.selectType('expiry')">
-        <div class="exp-opt-t">📅 Artikli po datumu isteka roka</div>
-        <div class="exp-opt-d">Artikli čiji rok ističe na odabrani datum</div>
-      </div>
-      <div class="exp-opt" id="eo-discount" onclick="Export.selectType('discount')">
-        <div class="exp-opt-t">🏷️ Artikli za sniženje</div>
-        <div class="exp-opt-d">Artikli čiji datum sniženja pada na odabrani datum</div>
-      </div>
-    </div>
-    <div class="frow">
-      <label class="flbl">Datum za izvoz</label>
-      <input type="date" id="exp-date-pick">
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" style="flex:1" onclick="Export.doExport()">📥 Preuzmi Excel</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="UI.closeOverlay('exp-overlay')">Zatvori</button>
-    </div>
+<div class="modal">
+  <div class="modal-title">📊 Izvoz u Excel</div>
+  <div class="exp-opts">
+    <div class="exp-opt on" id="eo-exp" onclick="Export.sel('expiry')"><div class="exp-opt-t">📅 Po datumu isteka roka</div></div>
+    <div class="exp-opt" id="eo-disc" onclick="Export.sel('discount')"><div class="exp-opt-t">🏷️ Za sniženje</div></div>
   </div>
+  <div class="frow"><label class="flbl">Datum za izvoz</label><input type="date" id="exp-dp"></div>
+  <div class="btn-row"><button class="btn btn-primary" style="flex:1" onclick="Export.go()">📥 Preuzmi Excel</button><button class="btn btn-ghost" style="flex:1" onclick="UI.cl('exp-overlay')">Zatvori</button></div>
+</div>
 </div>
 
 <!-- Backup -->
 <div class="overlay" id="bak-overlay">
-  <div class="modal">
-    <div class="modal-title">💾 Backup &amp; Uvoz</div>
-    <div class="export-opts">
-      <div class="exp-opt" onclick="Backup.json()">
-        <div class="exp-opt-t">📄 Izvoz JSON (kompletan backup)</div>
-        <div class="exp-opt-d">Svi podaci ove prodavnice — za vraćanje podataka</div>
-      </div>
-      <div class="exp-opt" onclick="Backup.excelAll()">
-        <div class="exp-opt-t">📊 Izvoz Excel (svi podaci)</div>
-        <div class="exp-opt-d">Kompletna lista — barkod, datumi, sniženje</div>
-      </div>
-      <div class="exp-opt" onclick="Backup.triggerImport()">
-        <div class="exp-opt-t">📤 Uvoz JSON backupa</div>
-        <div class="exp-opt-d">Vraćanje podataka iz prethodno sačuvanog backupa</div>
-      </div>
-    </div>
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="Backup.importJSON(event)">
-    <button class="btn btn-ghost btn-full mt8" onclick="UI.closeOverlay('bak-overlay')">Zatvori</button>
+<div class="modal">
+  <div class="modal-title">💾 Backup &amp; Uvoz</div>
+  <div class="exp-opts">
+    <div class="exp-opt" onclick="Backup.json()"><div class="exp-opt-t">📄 Izvoz JSON backup</div></div>
+    <div class="exp-opt" onclick="Backup.excel()"><div class="exp-opt-t">📊 Izvoz Excel (svi podaci)</div></div>
+    <div class="exp-opt" onclick="Backup.trigImport()"><div class="exp-opt-t">📤 Uvoz JSON backupa</div></div>
   </div>
+  <input type="file" id="imp-file" accept=".json" style="display:none" onchange="Backup.importJSON(event)">
+  <button class="btn btn-ghost btn-full mt8" onclick="UI.cl('bak-overlay')">Zatvori</button>
+</div>
 </div>
 
-<!-- Edit -->
+<!-- Edit item -->
 <div class="overlay" id="edit-overlay">
-  <div class="modal">
-    <div class="modal-title">✏️ Izmjena stavke</div>
-    <div class="frow"><label class="flbl">Barkod</label><input type="text" id="ed-bc" inputmode="numeric"></div>
-    <div class="frow"><label class="flbl">Datum isteka roka</label><input type="date" id="ed-date"></div>
-    <div class="frow">
-      <label class="flbl">Sniženje</label>
-      <select id="ed-disc" onchange="Edit.toggleDays()"><option value="0">Ne</option><option value="1">Da</option></select>
-    </div>
-    <div class="frow" id="ed-days-row" style="display:none">
-      <label class="flbl">Broj dana za sniženje</label>
-      <select id="ed-days"><option value="5">5 dana</option><option value="7">7 dana</option><option value="15">15 dana</option><option value="20">20 dana</option><option value="30">30 dana</option></select>
-    </div>
-    <hr class="divider">
-    <div class="btn-row">
-      <button class="btn btn-primary" style="flex:1" onclick="Edit.save()">💾 Sačuvaj</button>
-      <button class="btn" style="flex:1;background:var(--danger);color:#fff" onclick="Edit.delete()">🗑️ Obriši</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="UI.closeOverlay('edit-overlay')">Otkaži</button>
-    </div>
+<div class="modal">
+  <div class="modal-title">✏️ Izmjena stavke</div>
+  <div class="frow"><label class="flbl">Barkod</label><input type="text" id="ed-bc" inputmode="numeric"></div>
+  <div class="frow"><label class="flbl">Datum isteka</label><input type="date" id="ed-date"></div>
+  <div class="frow"><label class="flbl">Sniženje</label><select id="ed-disc" onchange="Edit.togDays()"><option value="0">Ne</option><option value="1">Da</option></select></div>
+  <div class="frow hidden" id="ed-drow"><label class="flbl">Broj dana</label><select id="ed-days"><option value="5">5 dana</option><option value="7">7 dana</option><option value="15">15 dana</option><option value="20">20 dana</option><option value="30">30 dana</option></select></div>
+  <hr class="divider">
+  <div class="btn-row">
+    <button class="btn btn-primary" style="flex:1" onclick="Edit.save()">💾 Sačuvaj</button>
+    <button class="btn btn-danger" style="flex:1" onclick="Edit.del()">🗑️ Obriši</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="UI.cl('edit-overlay')">Otkaži</button>
   </div>
+</div>
 </div>
 
 <!-- Admin Export -->
-<div class="overlay" id="admin-exp-overlay">
-  <div class="modal modal-wide">
-    <div class="modal-title">📊 Admin Izvoz</div>
-    <div class="frow">
-      <label class="flbl">Prodavnica</label>
-      <select id="aexp-store">
-        <option value="__all__">Sve prodavnice zajedno</option>
-        <option value="aman-178">Aman 178</option>
-        <option value="aman-225">Aman 225</option>
-        <option value="aman-266">Aman 266</option>
-        <option value="aman-274">Aman 274</option>
-        <option value="aman-296">Aman 296</option>
-        <option value="aman-311">Aman 311</option>
-        <option value="aman-324">Aman 324</option>
-        <option value="aman-329">Aman 329</option>
-        <option value="aman-335">Aman 335</option>
-        <option value="aman-347">Aman 347</option>
-      </select>
-    </div>
-    <div class="export-opts">
-      <div class="exp-opt on" id="aeo-expiry" onclick="AdminExport.selectType('expiry')">
-        <div class="exp-opt-t">📅 Po datumu isteka roka</div>
-      </div>
-      <div class="exp-opt" id="aeo-discount" onclick="AdminExport.selectType('discount')">
-        <div class="exp-opt-t">🏷️ Za sniženje</div>
-      </div>
-      <div class="exp-opt" id="aeo-all" onclick="AdminExport.selectType('all')">
-        <div class="exp-opt-t">📋 Kompletni podaci</div>
-      </div>
-    </div>
-    <div class="frow" id="aexp-date-row">
-      <label class="flbl">Datum za izvoz</label>
-      <input type="date" id="aexp-date">
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-primary" style="flex:1" onclick="AdminExport.doExport()">📥 Preuzmi Excel</button>
-      <button class="btn btn-ghost" style="flex:1" onclick="UI.closeOverlay('admin-exp-overlay')">Zatvori</button>
-    </div>
+<div class="overlay" id="adm-exp-overlay">
+<div class="modal modal-wide">
+  <div class="modal-title">📊 Admin Izvoz</div>
+  <div class="frow"><label class="flbl">Teren</label><select id="ae-trn" onchange="AE.onTrn()"><option value="__all__">Svi tereni</option></select></div>
+  <div class="frow"><label class="flbl">Objekat</label><select id="ae-str"><option value="__all__">Svi objekti</option></select></div>
+  <div class="exp-opts">
+    <div class="exp-opt on" id="ae-eo" onclick="AE.sel('expiry')"><div class="exp-opt-t">📅 Po datumu isteka</div></div>
+    <div class="exp-opt" id="ae-ed" onclick="AE.sel('discount')"><div class="exp-opt-t">🏷️ Za sniženje</div></div>
+    <div class="exp-opt" id="ae-ea" onclick="AE.sel('all')"><div class="exp-opt-t">📋 Kompletan backup</div></div>
   </div>
+  <div class="frow" id="ae-drow"><label class="flbl">Datum za izvoz</label><input type="date" id="ae-dp"></div>
+  <div class="btn-row"><button class="btn btn-primary" style="flex:1" onclick="AE.go()">📥 Preuzmi Excel</button><button class="btn btn-ghost" style="flex:1" onclick="UI.cl('adm-exp-overlay')">Zatvori</button></div>
+</div>
 </div>
 
-<!-- Email Script Modal -->
+<!-- Terrain Export -->
+<div class="overlay" id="trn-exp-overlay">
+<div class="modal">
+  <div class="modal-title">📊 Izvoz — <span id="te-name"></span></div>
+  <div class="frow"><label class="flbl">Objekat</label><select id="te-str"><option value="__all__">Svi objekti</option></select></div>
+  <div class="exp-opts">
+    <div class="exp-opt on" id="te-eo" onclick="TE.sel('expiry')"><div class="exp-opt-t">📅 Po datumu isteka</div></div>
+    <div class="exp-opt" id="te-ed" onclick="TE.sel('discount')"><div class="exp-opt-t">🏷️ Za sniženje</div></div>
+    <div class="exp-opt" id="te-ea" onclick="TE.sel('all')"><div class="exp-opt-t">📋 Kompletan backup</div></div>
+  </div>
+  <div class="frow" id="te-drow"><label class="flbl">Datum za izvoz</label><input type="date" id="te-dp"></div>
+  <div class="btn-row"><button class="btn btn-primary" style="flex:1" onclick="TE.go()">📥 Preuzmi Excel</button><button class="btn btn-ghost" style="flex:1" onclick="UI.cl('trn-exp-overlay')">Zatvori</button></div>
+</div>
+</div>
+
+<!-- Config Manager -->
+<div class="overlay" id="cfg-overlay">
+<div class="modal modal-wide">
+  <div class="modal-title">⚙️ Upravljanje konfiguracijom</div>
+  <div class="tab-row">
+    <button class="tab-btn on" id="tab-trn" onclick="CfgMgr.tab('trn')">🏔️ Tereni</button>
+    <button class="tab-btn" id="tab-str" onclick="CfgMgr.tab('str')">🏪 Objekti</button>
+  </div>
+  <div id="cfg-trn-tab">
+    <button class="btn btn-primary btn-full" style="margin-bottom:10px" onclick="CfgMgr.addTerrain()">+ Dodaj novi teren</button>
+    <div class="cfg-list" id="cfg-trn-list"></div>
+  </div>
+  <div id="cfg-str-tab" class="hidden">
+    <div class="frow"><select id="cfg-str-filter" onchange="CfgMgr.renderStores()"><option value="__all__">Svi tereni</option></select></div>
+    <button class="btn btn-primary btn-full" style="margin-bottom:10px" onclick="CfgMgr.addStore()">+ Dodaj novi objekat</button>
+    <div class="cfg-list" id="cfg-str-list"></div>
+  </div>
+  <button class="btn btn-ghost btn-full mt8" onclick="UI.cl('cfg-overlay')">Zatvori</button>
+</div>
+</div>
+
+<!-- Config Edit -->
+<div class="overlay" id="cfg-edit-overlay" style="z-index:600">
+<div class="modal">
+  <div class="modal-title" id="cfe-title">Uredi</div>
+  <div id="cfe-form"></div>
+  <div class="btn-row mt8">
+    <button class="btn btn-primary" style="flex:1" onclick="CfgMgr.saveEdit()">💾 Sačuvaj</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="UI.cl('cfg-edit-overlay')">Otkaži</button>
+  </div>
+</div>
+</div>
+
+<!-- Email Script -->
 <div class="overlay" id="email-overlay">
-  <div class="modal modal-wide">
-    <div class="modal-title">📧 Automatski Email Izvještaji — Google Apps Script</div>
-    <p style="font-size:.82rem;color:var(--text2);margin-bottom:12px;">
-      Ovaj skript šalje automatski email svakoj prodavnici svaki dan u 6:00 sa listom artikala za sutrašnji dan.
-    </p>
-    <div style="margin-bottom:10px">
-      <p style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:6px;">Koraci za podešavanje:</p>
-      <ol style="font-size:.8rem;color:var(--text2);line-height:1.8;padding-left:18px;">
-        <li>Otvorite <strong>script.google.com</strong> → New project</li>
-        <li>Zamijenite cijeli sadržaj sa kodom ispod</li>
-        <li>Promijenite <code style="background:var(--bg3);padding:1px 5px;border-radius:4px">FIREBASE_URL</code> u svoju Firebase URL adresu</li>
-        <li>Kliknite <strong>Save → Run → createTrigger</strong> (odobrite pristup)</li>
-        <li>Skript će se automatski pokretati svaki dan u 6:00</li>
-      </ol>
-    </div>
-    <button class="btn btn-ghost btn-full mb12" onclick="UI.copyScript()">📋 Kopiraj kod</button>
-    <div class="code-block" id="email-script-block"></div>
-    <button class="btn btn-ghost btn-full mt8" onclick="UI.closeOverlay('email-overlay')">Zatvori</button>
-  </div>
+<div class="modal modal-wide">
+  <div class="modal-title">📧 Email skripta — Google Apps Script</div>
+  <p style="font-size:.78rem;color:var(--text2);margin-bottom:9px">Dinamički čita sve objekte iz Firebase — novi objekti se automatski uključuju.</p>
+  <button class="btn btn-ghost btn-full" style="margin-bottom:9px" onclick="UI.copyScript()">📋 Kopiraj kod</button>
+  <div class="code-block" id="email-block"></div>
+  <button class="btn btn-ghost btn-full mt8" onclick="UI.cl('email-overlay')">Zatvori</button>
+</div>
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
 
-<!-- ===================== JAVASCRIPT ===================== -->
 <script>
-/* ============================================================
-   CONSTANTS — Promjenite PIN-ove po potrebi
-   ============================================================ */
-const STORES_CFG = [
-  { id:'aman-178', name:'Aman 178', email:'aman178@aman.co.rs', pin:'178' },
-  { id:'aman-225', name:'Aman 225', email:'aman225@aman.co.rs', pin:'225' },
-  { id:'aman-266', name:'Aman 266', email:'aman266@aman.co.rs', pin:'266' },
-  { id:'aman-274', name:'Aman 274', email:'aman274@aman.co.rs', pin:'274' },
-  { id:'aman-296', name:'Aman 296', email:'aman296@aman.co.rs', pin:'296' },
-  { id:'aman-311', name:'Aman 311', email:'aman311@aman.co.rs', pin:'311' },
-  { id:'aman-324', name:'Aman 324', email:'aman324@aman.co.rs', pin:'324' },
-  { id:'aman-329', name:'Aman 329', email:'aman329@aman.co.rs', pin:'329' },
-  { id:'aman-335', name:'Aman 335', email:'aman335@aman.co.rs', pin:'335' },
-  { id:'aman-347', name:'Aman 347', email:'aman347@aman.co.rs', pin:'347' },
+/* ===== CONFIG ===== */
+const FB='https://knjiga-rokova-aman-default-rtdb.europe-west1.firebasedatabase.app';
+const SA_PIN='2024';
+const SEED=[
+  {id:'aman-178',name:'Aman 178',email:'aman178@aman.co.rs',pin:'178'},
+  {id:'aman-225',name:'Aman 225',email:'aman225@aman.co.rs',pin:'225'},
+  {id:'aman-266',name:'Aman 266',email:'aman266@aman.co.rs',pin:'266'},
+  {id:'aman-274',name:'Aman 274',email:'aman274@aman.co.rs',pin:'274'},
+  {id:'aman-296',name:'Aman 296',email:'aman296@aman.co.rs',pin:'296'},
+  {id:'aman-311',name:'Aman 311',email:'aman311@aman.co.rs',pin:'311'},
+  {id:'aman-324',name:'Aman 324',email:'aman324@aman.co.rs',pin:'324'},
+  {id:'aman-329',name:'Aman 329',email:'aman329@aman.co.rs',pin:'329'},
+  {id:'aman-335',name:'Aman 335',email:'aman335@aman.co.rs',pin:'335'},
+  {id:'aman-347',name:'Aman 347',email:'aman347@aman.co.rs',pin:'347'},
 ];
-const ADMIN_PIN = '2024'; // Admin PIN — samo brojevi
 
-/* ============================================================
-   STATE
-   ============================================================ */
-let session = null;   // { storeId, storeName, isAdmin }
-let items = [];       // local cache
-let fbReady = false;
-let fbListener = null;
-let adminAllItems = {}; // { storeId: [items] }
+/* ===== STATE ===== */
+let session=null,terrains=[],stores=[],items=[],adminData={},fbSub=null;
 
-/* ============================================================
-   UTILITIES
-   ============================================================ */
-function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
-function today() { return new Date().toISOString().split('T')[0]; }
-function tomorrow() { const d=new Date(); d.setDate(d.getDate()+1); return d.toISOString().split('T')[0]; }
-function fmtDate(s) { if(!s) return ''; const [y,m,d]=s.split('-'); return `${d}.${m}.${y}.`; }
-function subtractDays(dateStr, days) { const d=new Date(dateStr); d.setDate(d.getDate()-days); return d.toISOString().split('T')[0]; }
-function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function toast(msg, type='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `show ${type==='ok'?'ok':type==='err'?'err':''}`;
-  clearTimeout(t._t);
-  t._t = setTimeout(() => t.className='', 3400);
+/* ===== UTILS ===== */
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const today=()=>new Date().toISOString().split('T')[0];
+const tomorrow=()=>{const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().split('T')[0];};
+const fmtD=s=>{if(!s)return'';const[y,m,d]=s.split('-');return`${d}.${m}.${y}.`;};
+const subDays=(ds,n)=>{const d=new Date(ds);d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const setMsg=t=>{const e=document.getElementById('load-msg');if(e)e.textContent=t;};
+function toast(msg,type=''){
+  const t=document.getElementById('toast');t.textContent=msg;
+  t.className=`show ${type==='ok'?'ok':type==='err'?'err':''}`;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='',3400);
 }
 
-/* ============================================================
-   SETUP — Firebase config
-   ============================================================ */
-const Setup = {
-  save() {
-    const raw = document.getElementById('fb-config-input').value.trim();
-    const errEl = document.getElementById('setup-err');
-    errEl.textContent = '';
-    if (!raw) { errEl.textContent = 'Molimo nalijepite Firebase konfiguraciju.'; return; }
-    let cfg;
-    try { cfg = JSON.parse(raw); } catch {
-      errEl.textContent = 'Neispravan format — provjerite da li ste kopirali cijeli objekt sa { }.';
-      return;
-    }
-    if (!cfg.apiKey || !cfg.databaseURL) {
-      errEl.textContent = 'Nedostaju apiKey ili databaseURL. Provjerite konfiguraciju.';
-      return;
-    }
-    localStorage.setItem('fb-cfg', JSON.stringify(cfg));
-    location.reload();
+/* ===== FIREBASE REST ===== */
+const FBR={
+  async get(p){try{const ctrl=new AbortController();const tid=setTimeout(()=>ctrl.abort(),8000);const r=await fetch(`${FB}/${p}.json`,{signal:ctrl.signal});clearTimeout(tid);return r.ok?r.json():null;}catch{return null;}},
+  async set(p,d){try{await fetch(`${FB}/${p}.json`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});return true;}catch{return false;}},
+  async patch(p,d){try{await fetch(`${FB}/${p}.json`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});return true;}catch{return false;}},
+  async del(p){try{await fetch(`${FB}/${p}.json`,{method:'DELETE'});return true;}catch{return false;}},
+  listen(p,cb,onErr){
+    const es=new EventSource(`${FB}/${p}.json`);
+    es.addEventListener('put',e=>{try{cb(JSON.parse(e.data).data);}catch{}});
+    es.onerror=()=>{if(onErr)onErr();};
+    return()=>es.close();
   }
 };
 
-/* ============================================================
-   FIREBASE INIT
-   ============================================================ */
-/* ============================================================
-   FIREBASE REST API — bez SDK-a, radi sa file:// protokolom
-   ============================================================ */
-const FB_BASE = 'https://knjiga-rokova-aman-default-rtdb.europe-west1.firebasedatabase.app';
-// Za email script
-localStorage.setItem('fb-cfg', JSON.stringify({databaseURL: FB_BASE}));
-
-const FBR = {
-  async get(path) {
-    try {
-      const res = await fetch(`${FB_BASE}/${path}.json`);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch { return null; }
+/* ===== CONFIG DB ===== */
+const CDB={
+  _fromRaw(td,sd){
+    terrains=td?Object.entries(td).map(([id,v])=>({id,...v})).sort((a,b)=>a.order-b.order):[];
+    stores=sd?Object.entries(sd).map(([id,v])=>({id,...v})):[];
   },
-  async set(path, data) {
-    try {
-      await fetch(`${FB_BASE}/${path}.json`, {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(data)
-      });
-      return true;
-    } catch { return false; }
+  saveCache(){localStorage.setItem('knjiga-cfg-cache',JSON.stringify({t:terrains,s:stores,ts:Date.now()}));},
+  loadCache(){
+    try{const c=JSON.parse(localStorage.getItem('knjiga-cfg-cache')||'{}');if(c.t&&c.t.length){terrains=c.t;stores=c.s||[];return true;}}catch{}return false;
   },
-  async patch(path, data) {
-    try {
-      await fetch(`${FB_BASE}/${path}.json`, {
-        method: 'PATCH',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(data)
-      });
-      return true;
-    } catch { return false; }
+  async load(){
+    const[td,sd]=await Promise.all([FBR.get('terrains'),FBR.get('storeConfig')]);
+    if(td===null&&sd===null)return; // keep cache
+    this._fromRaw(td,sd);
+    if(!terrains.length){await this.seed();return;}
+    this.saveCache();
   },
-  async delete(path) {
-    try {
-      await fetch(`${FB_BASE}/${path}.json`, { method: 'DELETE' });
-      return true;
-    } catch { return false; }
-  },
-  // Real-time SSE listener
-  listen(path, onChange, onErr) {
-    const es = new EventSource(`${FB_BASE}/${path}.json`);
-    es.addEventListener('put', e => {
-      try {
-        const d = JSON.parse(e.data);
-        onChange(d.data);
-      } catch {}
-    });
-    es.addEventListener('patch', e => {
-      try {
-        const d = JSON.parse(e.data);
-        onChange(null, d.data); // signal partial update
-      } catch {}
-    });
-    es.onerror = () => { if (onErr) onErr(); };
-    return () => es.close();
-  }
-};
-
-function initFirebase() {
-  // Bez SDK-a — provjeri samo internet
-  fbReady = navigator.onLine;
-  if (!fbReady) {
-    console.warn('Offline — koristimo lokalne podatke');
-  }
-  return true; // Uvijek nastavljamo, s fallbackom na localStorage
-}
-
-/* ============================================================
-   DATABASE — Firebase REST API + localStorage fallback
-   ============================================================ */
-const DB = {
-  _lsKey(storeId) { return `knjiga-${storeId}`; },
-  _saveLocal(storeId, arr) { localStorage.setItem(this._lsKey(storeId), JSON.stringify(arr)); },
-  _loadLocal(storeId) { try { return JSON.parse(localStorage.getItem(this._lsKey(storeId))||'[]'); } catch { return []; } },
-
-  connect(storeId) {
-    if (fbListener) { fbListener(); fbListener = null; }
-
-    // First load from local cache instantly
-    items = this._loadLocal(storeId);
-    List.render(); Stats.update();
-
-    // Then try Firebase SSE for real-time
-    let sseOk = false;
-    fbListener = FBR.listen(
-      `stores/${storeId}/items`,
-      (data) => {
-        if (!sseOk) { sseOk = true; setSyncStatus(true); }
-        if (data === null) { items = []; }
-        else {
-          items = Object.entries(data)
-            .map(([id,v]) => ({id,...v}))
-            .sort((a,b) => new Date(b.createdAt)-new Date(a.createdAt));
-        }
-        this._saveLocal(storeId, items);
-        List.render(); Stats.update();
-      },
-      () => { setSyncStatus(false); }
-    );
-  },
-
-  async add(storeId, item) {
-    // Optimistic local update
-    items.unshift(item);
-    this._saveLocal(storeId, items);
-    List.render(); Stats.update();
-    // Sync to Firebase
-    const ok = await FBR.set(`stores/${storeId}/items/${item.id}`, item);
-    if (!ok) setSyncStatus(false);
-  },
-
-  async update(storeId, itemId, patch) {
-    const idx = items.findIndex(i=>i.id===itemId);
-    if (idx>-1) { items[idx]={...items[idx],...patch}; this._saveLocal(storeId,items); List.render(); Stats.update(); }
-    const ok = await FBR.patch(`stores/${storeId}/items/${itemId}`, patch);
-    if (!ok) setSyncStatus(false);
-  },
-
-  async remove(storeId, itemId) {
-    items = items.filter(i=>i.id!==itemId);
-    this._saveLocal(storeId, items); List.render(); Stats.update();
-    await FBR.delete(`stores/${storeId}/items/${itemId}`);
-  },
-
-  async autoClean(storeId) {
-    const cutoff = subtractDays(today(), 30);
-    const toDelete = items.filter(i => i.expiryDate <= cutoff);
-    if (!toDelete.length) return 0;
-    items = items.filter(i => i.expiryDate > cutoff);
-    this._saveLocal(storeId, items);
-    // Delete from Firebase
-    for (const item of toDelete) {
-      await FBR.delete(`stores/${storeId}/items/${item.id}`);
-    }
-    return toDelete.length;
-  },
-
-  async fetchStore(storeId) {
-    const data = await FBR.get(`stores/${storeId}/items`);
-    if (!data) return this._loadLocal(storeId);
-    return Object.entries(data).map(([id,v])=>({id,...v}));
-  },
-
-  async replaceAll(storeId, arr) {
-    items = arr; this._saveLocal(storeId, arr);
-    List.render(); Stats.update();
-    const obj = {}; arr.forEach(item => { obj[item.id]=item; });
-    await FBR.set(`stores/${storeId}/items`, obj);
-  }
-};
-
-function setSyncStatus(online) {
-  fbReady = online;
-  const dot = document.getElementById('sync-dot');
-  const dot2 = document.getElementById('sync-dot2');
-  const txt = document.getElementById('sync-text');
-  const bar = document.getElementById('sync-status');
-  if (dot) { dot.className = 'online-dot' + (online?'':' off'); }
-  if (dot2) { dot2.className = 'online-dot' + (online?'':' off'); }
-  if (txt) txt.textContent = online ? 'Online — Firebase sinhronizacija aktivna' : 'Offline — lokalni podaci';
-  if (bar) { bar.classList.toggle('hidden', online); bar.classList.toggle('off', !online); }
-}
-
-/* ============================================================
-   AUTH
-   ============================================================ */
-const Auth = {
-  login(storeOrAdmin, pin) {
-    if (storeOrAdmin === '__admin__') {
-      if (pin !== ADMIN_PIN) return false;
-      session = { storeId: null, storeName: 'Admin', isAdmin: true };
-      localStorage.setItem('knjiga-session', JSON.stringify(session));
-      showPage('page-admin');
-      Admin.load();
-      return true;
-    }
-    const store = STORES_CFG.find(s => s.id === storeOrAdmin);
-    if (!store || pin !== store.pin) return false;
-    session = { storeId: store.id, storeName: store.name, isAdmin: false };
-    localStorage.setItem('knjiga-session', JSON.stringify(session));
-    startStoreApp();
-    return true;
-  },
-
-  logout() {
-    if (fbListener) { fbListener(); fbListener = null; }
-    session = null;
-    localStorage.removeItem('knjiga-session');
-    items = [];
-    Login.reset();
-    showPage('page-login');
-    toast('Odjavljeni ste.');
-  },
-
-  restore() {
-    try {
-      const s = JSON.parse(localStorage.getItem('knjiga-session'));
-      if (s) { session = s; return true; }
-    } catch {}
-    return false;
-  }
-};
-
-function startStoreApp() {
-  document.getElementById('app-store-name').textContent = session.storeName;
-  showPage('page-app');
-  Steps.go(1);
-  DB.connect(session.storeId);
-  DB.autoClean(session.storeId).then(n => {
-    if (n > 0) setTimeout(() => toast(`Automatski uklonjeno ${n} isteklih stavki`, 'ok'), 800);
-  });
-  setTimeout(() => document.getElementById('bc-input').focus(), 200);
-}
-
-/* ============================================================
-   LOGIN
-   ============================================================ */
-const Login = {
-  _pin: '',
-
-  _expectedLen() {
-    const store = document.getElementById('login-store').value;
-    if (!store) return 0;
-    if (store === '__admin__') return ADMIN_PIN.length;
-    return STORES_CFG.find(s => s.id === store)?.pin.length || 3;
-  },
-
-  onStoreChange() {
-    const v = document.getElementById('login-store').value;
-    this._pin = '';
-    document.getElementById('pin-section').style.display = v ? 'block' : 'none';
-    document.getElementById('login-err').textContent = '';
-    document.getElementById('login-submit-btn').style.display = 'none';
-    this._buildDots();
-    this._updateDots();
-  },
-
-  _buildDots() {
-    const len = this._expectedLen();
-    const container = document.getElementById('pin-dots');
-    container.innerHTML = '';
-    for (let i = 0; i < len; i++) {
-      const d = document.createElement('div');
-      d.className = 'dot';
-      d.id = 'd' + i;
-      container.appendChild(d);
-    }
-  },
-
-  key(k) {
-    const max = this._expectedLen();
-    if (this._pin.length >= max) return;
-    this._pin += k;
-    this._updateDots();
-    document.getElementById('login-err').textContent = '';
-    // Show submit button once any digit entered
-    document.getElementById('login-submit-btn').style.display = 'block';
-    // Auto-submit when length matches exactly
-    if (this._pin.length === max) {
-      setTimeout(() => this._attempt(), 180);
-    }
-  },
-
-  del() {
-    this._pin = this._pin.slice(0, -1);
-    this._updateDots();
-    document.getElementById('login-err').textContent = '';
-    document.getElementById('login-submit-btn').style.display = this._pin.length > 0 ? 'block' : 'none';
-  },
-
-  _attempt() {
-    const store = document.getElementById('login-store').value;
-    if (!store || !this._pin) return;
-    const ok = Auth.login(store, this._pin);
-    if (!ok) {
-      document.getElementById('login-err').textContent = '✗ Pogrešan PIN — pokušajte ponovo';
-      this._pin = '';
-      this._updateDots();
-      document.getElementById('login-submit-btn').style.display = 'none';
-    }
-  },
-
-  _updateDots() {
-    const len = this._expectedLen();
-    for (let i = 0; i < len; i++) {
-      const d = document.getElementById('d' + i);
-      if (d) d.className = 'dot' + (i < this._pin.length ? ' filled' : '');
-    }
-  },
-
-  reset() {
-    this._pin = '';
-    document.getElementById('login-store').value = '';
-    document.getElementById('pin-section').style.display = 'none';
-    document.getElementById('login-err').textContent = '';
-    document.getElementById('login-submit-btn').style.display = 'none';
-    const container = document.getElementById('pin-dots');
-    if (container) container.innerHTML = '';
-  }
-};
-
-/* ============================================================
-   STEP WIZARD
-   ============================================================ */
-let curBC = '', curDate = '';
-
-const Steps = {
-  go(step) {
-    [1,2,3,4].forEach(n => {
-      const el = document.getElementById('s'+n);
-      el.classList.toggle('hidden', n!==step);
-      if (n===step) el.classList.add('anim');
-      const seg = document.getElementById('seg'+n);
-      if (seg) seg.className = 'step-seg'+(n<step?' done':n===step?' active':'');
-    });
-  },
-
-  confirmBarcode() {
-    const val = document.getElementById('bc-input').value.trim();
-    if (!val) { toast('Molimo unesite ili skenirajte barkod!','err'); return; }
-    curBC = val;
-    ['chip-bc','chip-bc2','chip-bc3'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=val; });
-    document.getElementById('exp-date').value = today();
-    this.go(2);
-  },
-
-  confirmDate() {
-    const val = document.getElementById('exp-date').value;
-    if (!val) { toast('Molimo izaberite datum isteka!','err'); return; }
-    curDate = val;
-    ['chip-dt','chip-dt2'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=fmtDate(val); });
-    this.go(3);
-  },
-
-  setDiscount(has) {
-    if (!has) { this._save(false, null); }
-    else { document.getElementById('disc-days').value=''; this.go(4); }
-  },
-
-  confirmDays() {
-    const days = document.getElementById('disc-days').value;
-    if (!days) { toast('Molimo izaberite broj dana!','err'); return; }
-    this._save(true, parseInt(days));
-  },
-
-  async _save(hasDiscount, discountDays) {
-    const discountDate = hasDiscount ? subtractDays(curDate, discountDays) : null;
-    const item = { id:uid(), barcode:curBC, expiryDate:curDate, hasDiscount, discountDays, discountDate, createdAt:new Date().toISOString() };
-    await DB.add(session.storeId, item);
-    toast(`✓ Artikal ${curBC} sačuvan!`, 'ok');
-    document.getElementById('bc-input').value = '';
-    curBC=''; curDate='';
-    this.go(1);
-    setTimeout(() => document.getElementById('bc-input').focus(), 100);
-  }
-};
-
-/* ============================================================
-   LIST
-   ============================================================ */
-const List = {
-  _f: 'all',
-  filter(f,btn) {
-    this._f=f;
-    document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
-    btn.classList.add('on');
-    this.render();
-  },
-  render() {
-    const t = today();
-    let data = [...items];
-    if (this._f==='discount') data=data.filter(i=>i.hasDiscount);
-    else if (this._f==='today') data=data.filter(i=>i.expiryDate===t);
-    else if (this._f==='expired') data=data.filter(i=>i.expiryDate<t);
-    const el = document.getElementById('items-list');
-    if (!el) return;
-    if (!data.length) { el.innerHTML=`<div class="empty-state"><div class="empty-icon">📦</div>Nema stavki za prikaz</div>`; return; }
-    el.innerHTML = data.map(item => {
-      let cls='item-row';
-      if (item.expiryDate<t) cls+=' expired';
-      else if (item.expiryDate===t) cls+=' expiring';
-      return `<div class="${cls}" onclick="Edit.open('${item.id}')">
-        <div class="item-bc">${escH(item.barcode)}</div>
-        <div class="item-dt">${fmtDate(item.expiryDate)}</div>
-        ${item.hasDiscount
-          ? `<span class="badge badge-d">-${item.discountDays}d</span>`
-          : `<span class="badge badge-n">Bez</span>`}
-      </div>`;
-    }).join('');
-  }
-};
-
-/* ============================================================
-   STATS
-   ============================================================ */
-const Stats = {
-  update() {
-    const t = today();
-    document.getElementById('sn-total').textContent = items.length;
-    document.getElementById('sn-disc').textContent = items.filter(i=>i.hasDiscount).length;
-    document.getElementById('sn-today').textContent = items.filter(i=>i.expiryDate===t).length;
-  }
-};
-
-/* ============================================================
-   CAMERA / SCANNER
-   ============================================================ */
-const Cam = {
-  open() { document.getElementById('cam-input').value=''; document.getElementById('cam-input').click(); },
-  processImage(event) {
-    const file = event.target.files[0]; if (!file) return;
-    document.getElementById('cam-status').textContent='Čitanje barkoda...';
-    document.getElementById('cam-sub').textContent='Molimo sačekajte';
-    document.getElementById('cam-overlay').classList.add('open');
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      if ('BarcodeDetector' in window) {
-        new BarcodeDetector({formats:['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code']})
-          .detect(img).then(codes => {
-            URL.revokeObjectURL(url);
-            if (codes.length>0) this._onCode(codes[0].rawValue);
-            else this._quagga(url,img);
-          }).catch(() => this._quagga(url,img));
-      } else this._quagga(url,img);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); document.getElementById('cam-overlay').classList.remove('open'); toast('Greška pri učitavanju slike!','err'); };
-    img.src = url;
-  },
-  _quagga(url,img) {
-    const MAX=1200, scale=Math.min(1,MAX/Math.max(img.width,img.height));
-    const c=document.createElement('canvas'); c.width=Math.round(img.width*scale); c.height=Math.round(img.height*scale);
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    if (typeof Quagga === 'undefined') {
-      document.getElementById('cam-overlay').classList.remove('open');
-      toast('Barkod nije prepoznat — unesite ručno.','err');
-      return;
-    }
-    Quagga.decodeSingle({ decoder:{readers:['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader']}, locate:true, src:c.toDataURL('image/jpeg',.92) }, result => {
-      URL.revokeObjectURL(url);
-      document.getElementById('cam-overlay').classList.remove('open');
-      if (result?.codeResult?.code) this._onCode(result.codeResult.code);
-      else toast('Barkod nije prepoznat — unesite ručno.','err');
-    });
-  },
-  _onCode(code) {
-    document.getElementById('cam-overlay').classList.remove('open');
-    const inp = document.getElementById('bc-input');
-    inp.value=code; inp.classList.add('scan-pop'); setTimeout(()=>inp.classList.remove('scan-pop'),500);
-    toast('✓ Barkod skeniran: '+code,'ok');
-  }
-};
-
-/* ============================================================
-   EXPORT (store)
-   ============================================================ */
-const Export = {
-  _type:'expiry',
-  selectType(t) {
-    this._type=t;
-    document.getElementById('eo-expiry').classList.toggle('on',t==='expiry');
-    document.getElementById('eo-discount').classList.toggle('on',t==='discount');
-  },
-  doExport() {
-    const date=document.getElementById('exp-date-pick').value;
-    if (!date) { toast('Izaberite datum!','err'); return; }
-    let rows, headers, filename;
-    if (this._type==='expiry') {
-      const f=items.filter(i=>i.expiryDate===date);
-      if (!f.length) { toast('Nema artikala za odabrani datum!','err'); return; }
-      headers=['Barkod','Datum isteka roka']; rows=f.map(i=>[i.barcode,fmtDate(i.expiryDate)]);
-      filename=`isteci_${session.storeId}_${date}.xlsx`;
-    } else {
-      const f=items.filter(i=>i.hasDiscount&&i.discountDate===date);
-      if (!f.length) { toast('Nema artikala za sniženje na odabrani datum!','err'); return; }
-      headers=['Barkod','Datum sniženja','Datum isteka roka']; rows=f.map(i=>[i.barcode,fmtDate(i.discountDate),fmtDate(i.expiryDate)]);
-      filename=`snizenje_${session.storeId}_${date}.xlsx`;
-    }
-    writeXlsx(headers,rows,filename);
-    UI.closeOverlay('exp-overlay');
-    toast(`✓ Izvezeno ${rows.length} artikala`,'ok');
-  }
-};
-
-/* ============================================================
-   BACKUP (store)
-   ============================================================ */
-const Backup = {
-  json() {
-    const blob=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download=`backup_${session.storeId}_${today()}.json`; a.click();
-    toast('✓ JSON backup preuzet','ok');
-  },
-  excelAll() {
-    if (!items.length) { toast('Nema podataka!','err'); return; }
-    const h=['Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'];
-    const r=items.map(i=>[i.barcode,fmtDate(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtDate(i.discountDate):'',i.discountDays?String(i.discountDays):'']);
-    writeXlsx(h,r,`svi_podaci_${session.storeId}_${today()}.xlsx`);
-    toast(`✓ Izvezeno ${items.length} artikala`,'ok');
-  },
-  triggerImport() { document.getElementById('import-file').click(); },
-  async importJSON(event) {
-    const file=event.target.files[0]; if (!file) return;
-    const reader=new FileReader();
-    reader.onload=async e => {
-      try {
-        const arr=JSON.parse(e.target.result);
-        if (!Array.isArray(arr)) throw new Error();
-        if (!confirm(`Uvesti ${arr.length} stavki?\nOvo će zamijeniti sve postojeće podatke prodavnice ${session.storeName}.`)) return;
-        await DB.replaceAll(session.storeId, arr);
-        UI.closeOverlay('bak-overlay');
-        toast(`✓ Uvezeno ${arr.length} stavki`,'ok');
-      } catch { toast('Greška — neispravan JSON!','err'); }
-    };
-    reader.readAsText(file);
-    event.target.value='';
-  }
-};
-
-/* ============================================================
-   EDIT
-   ============================================================ */
-const Edit = {
-  _id:null,
-  open(id) {
-    this._id=id;
-    const item=items.find(i=>i.id===id); if (!item) return;
-    document.getElementById('ed-bc').value=item.barcode;
-    document.getElementById('ed-date').value=item.expiryDate;
-    document.getElementById('ed-disc').value=item.hasDiscount?'1':'0';
-    document.getElementById('ed-days').value=item.discountDays||'5';
-    this.toggleDays();
-    document.getElementById('edit-overlay').classList.add('open');
-  },
-  toggleDays() {
-    document.getElementById('ed-days-row').style.display=document.getElementById('ed-disc').value==='1'?'block':'none';
-  },
-  async save() {
-    const barcode=document.getElementById('ed-bc').value.trim();
-    const expiryDate=document.getElementById('ed-date').value;
-    if (!barcode||!expiryDate) { toast('Popunite sva polja!','err'); return; }
-    const hasDiscount=document.getElementById('ed-disc').value==='1';
-    const discountDays=hasDiscount?parseInt(document.getElementById('ed-days').value):null;
-    const discountDate=hasDiscount?subtractDays(expiryDate,discountDays):null;
-    await DB.update(session.storeId,this._id,{barcode,expiryDate,hasDiscount,discountDays,discountDate});
-    UI.closeOverlay('edit-overlay');
-    toast('✓ Izmjena sačuvana','ok');
-  },
-  async delete() {
-    if (!confirm('Obrisati ovu stavku?')) return;
-    await DB.remove(session.storeId,this._id);
-    UI.closeOverlay('edit-overlay');
-    toast('Stavka obrisana','ok');
-  }
-};
-
-/* ============================================================
-   ADMIN
-   ============================================================ */
-const Admin = {
-  async load() {
-    document.getElementById('store-grid').innerHTML='<div class="empty-state"><div class="empty-icon">⏳</div>Učitavam...</div>';
-    adminAllItems = {};
-    const promises = STORES_CFG.map(async s => {
-      adminAllItems[s.id] = await DB.fetchStore(s.id);
-    });
-    await Promise.all(promises);
-    this.render();
-  },
-
-  async refresh() {
-    toast('Osvježavam podatke...');
+  async seed(){
+    setMsg('Postavljam početne podatke (jednom)...');
+    const tid='terrain-1';
+    const ts={};ts[tid]={name:'Teren 1',pin:'1111',order:1,createdAt:new Date().toISOString()};
+    const sc={};SEED.forEach(s=>{sc[s.id]={...s,terrainId:tid,createdAt:new Date().toISOString()};});
+    // Single batch write — much faster
+    await Promise.all([FBR.set('terrains',ts), FBR.set('storeConfig',sc)]);
     await this.load();
-    toast('✓ Podaci osvježeni','ok');
   },
-
-  render() {
-    const t = today();
-    let totalAll=0, discAll=0, todayAll=0;
-    const cards = STORES_CFG.map(s => {
-      const sitems = adminAllItems[s.id] || [];
-      const total=sitems.length, disc=sitems.filter(i=>i.hasDiscount).length, tod=sitems.filter(i=>i.expiryDate===t).length, exp=sitems.filter(i=>i.expiryDate<t).length;
-      totalAll+=total; discAll+=disc; todayAll+=tod;
-      return `<div class="store-card" onclick="Admin.openStore('${s.id}')">
-        <div class="sc-name">${s.name}</div>
-        <div class="sc-stats">
-          <div class="sc-stat">Ukupno <span>${total}</span></div>
-          <div class="sc-stat">Sniženje <span>${disc}</span></div>
-          ${tod>0?`<div class="sc-stat sc-warn">Iste danas <span>${tod}</span></div>`:''}
-          ${exp>0?`<div class="sc-stat sc-warn">Isteklo <span>${exp}</span></div>`:''}
-        </div>
-      </div>`;
-    }).join('');
-    document.getElementById('store-grid').innerHTML=cards;
-    document.getElementById('as-total').textContent=totalAll;
-    document.getElementById('as-disc').textContent=discAll;
-    document.getElementById('as-today').textContent=todayAll;
+  async addTerrain(name,pin){
+    const id='t-'+uid();const order=terrains.length+1;
+    await FBR.set(`terrains/${id}`,{name,pin,order,createdAt:new Date().toISOString()});
+    await this.load();return id;
   },
-
-  openStore(storeId) {
-    const s = STORES_CFG.find(x=>x.id===storeId);
-    const sitems = adminAllItems[storeId] || [];
-    const t = today();
-    const rows = sitems.map(item => {
-      let cls='item-row';
-      if (item.expiryDate<t) cls+=' expired';
-      else if (item.expiryDate===t) cls+=' expiring';
-      return `<div class="${cls}" style="cursor:default">
-        <div class="item-bc">${escH(item.barcode)}</div>
-        <div class="item-dt">${fmtDate(item.expiryDate)}</div>
-        ${item.hasDiscount?`<span class="badge badge-d">-${item.discountDays}d</span>`:`<span class="badge badge-n">Bez</span>`}
-      </div>`;
-    }).join('');
-    // Create temp overlay
-    const ov = document.createElement('div'); ov.className='overlay open';
-    ov.innerHTML=`<div class="modal modal-wide">
-      <div class="modal-title">🏪 ${s.name} — ${sitems.length} stavki</div>
-      <div style="font-size:.78rem;color:var(--text3);margin-bottom:10px;">📧 ${s.email}</div>
-      <div class="list-wrap" style="max-height:320px">${rows||'<div class="empty-state"><div class="empty-icon">📦</div>Nema stavki</div>'}</div>
-      <div class="btn-row mt8">
-        <button class="btn btn-primary" style="flex:1" onclick="AdminExport.quickExport('${storeId}')">📥 Excel</button>
-        <button class="btn btn-ghost" style="flex:1" onclick="this.closest('.overlay').remove()">Zatvori</button>
-      </div>
-    </div>`;
-    ov.onclick=e=>{ if(e.target===ov) ov.remove(); };
-    document.body.appendChild(ov);
+  async updTerrain(id,patch){await FBR.patch(`terrains/${id}`,patch);await this.load();this.saveCache();},
+  async delTerrain(id){
+    if(stores.some(s=>s.terrainId===id)){toast('Premjestite objekte prije brisanja terena!','err');return false;}
+    await FBR.del(`terrains/${id}`);await this.load();return true;
+  },
+  async addStore(name,email,pin,terrainId){
+    const id='s-'+uid();
+    await FBR.set(`storeConfig/${id}`,{id,name,email,pin,terrainId,createdAt:new Date().toISOString()});
+    await this.load();return id;
+  },
+  async updStore(id,patch){await FBR.patch(`storeConfig/${id}`,patch);await this.load();this.saveCache();},
+  async delStore(id){
+    if(!confirm('Obrisati objekat i sve stavke? Nepovratno!'))return false;
+    await Promise.all([FBR.del(`storeConfig/${id}`),FBR.del(`stores/${id}/items`)]);
+    await this.load();return true;
   }
 };
 
-/* ============================================================
-   ADMIN EXPORT
-   ============================================================ */
-const AdminExport = {
-  _type:'expiry',
-  selectType(t) {
-    this._type=t;
-    ['expiry','discount','all'].forEach(x=>document.getElementById('aeo-'+x).classList.toggle('on',x===t));
-    document.getElementById('aexp-date-row').style.display=t==='all'?'none':'block';
+/* ===== ITEMS DB ===== */
+const DB={
+  lk:sid=>`knjiga-${sid}`,
+  sl:(sid,a)=>localStorage.setItem(DB.lk(sid),JSON.stringify(a)),
+  ll:sid=>{try{return JSON.parse(localStorage.getItem(DB.lk(sid))||'[]');}catch{return[];}},
+  connect(sid){
+    if(fbSub){fbSub();fbSub=null;}
+    items=this.ll(sid);List.render();Stats.upd();
+    fbSub=FBR.listen(`stores/${sid}/items`,data=>{
+      items=data?Object.entries(data).map(([id,v])=>({id,...v})).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)):[];
+      this.sl(sid,items);List.render();Stats.upd();setSS(true);
+    },()=>setSS(false));
   },
-  async doExport() {
-    const storeId=document.getElementById('aexp-store').value;
-    const date=this._type!=='all'?document.getElementById('aexp-date').value:'';
-    if (this._type!=='all'&&!date) { toast('Izaberite datum!','err'); return; }
-    const stores=storeId==='__all__'?STORES_CFG:STORES_CFG.filter(s=>s.id===storeId);
-    const allRows=[]; let headers;
-    const inclStore=storeId==='__all__';
-    for (const s of stores) {
-      const sitems=adminAllItems[s.id]||(await DB.fetchStore(s.id));
-      let filtered=sitems;
-      if (this._type==='expiry') filtered=sitems.filter(i=>i.expiryDate===date);
-      else if (this._type==='discount') filtered=sitems.filter(i=>i.hasDiscount&&i.discountDate===date);
-      if (inclStore) filtered=filtered.map(i=>({...i,_store:s.name}));
-      allRows.push(...filtered);
-    }
-    if (!allRows.length) { toast('Nema podataka za odabrane parametre!','err'); return; }
-    if (this._type==='expiry') {
-      headers=inclStore?['Prodavnica','Barkod','Datum isteka']:['Barkod','Datum isteka'];
-      const r=allRows.map(i=>inclStore?[i._store,i.barcode,fmtDate(i.expiryDate)]:[i.barcode,fmtDate(i.expiryDate)]);
-      writeXlsx(headers,r,`admin_isteci_${date}.xlsx`);
-    } else if (this._type==='discount') {
-      headers=inclStore?['Prodavnica','Barkod','Datum sniženja','Datum isteka']:['Barkod','Datum sniženja','Datum isteka'];
-      const r=allRows.map(i=>inclStore?[i._store,i.barcode,fmtDate(i.discountDate),fmtDate(i.expiryDate)]:[i.barcode,fmtDate(i.discountDate),fmtDate(i.expiryDate)]);
-      writeXlsx(headers,r,`admin_snizenje_${date}.xlsx`);
-    } else {
-      headers=inclStore?['Prodavnica','Barkod','Datum isteka','Sniženje','Datum sniženja','Dana']:['Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'];
-      const r=allRows.map(i=>inclStore?[i._store,i.barcode,fmtDate(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtDate(i.discountDate):'',i.discountDays||'']:[ i.barcode,fmtDate(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtDate(i.discountDate):'',i.discountDays||'']);
-      writeXlsx(headers,r,`admin_svi_podaci_${today()}.xlsx`);
-    }
-    UI.closeOverlay('admin-exp-overlay');
-    toast(`✓ Izvezeno ${allRows.length} artikala`,'ok');
+  async add(sid,item){items.unshift(item);this.sl(sid,items);List.render();Stats.upd();await FBR.set(`stores/${sid}/items/${item.id}`,item);},
+  async upd(sid,iid,p){const i=items.findIndex(x=>x.id===iid);if(i>-1){items[i]={...items[i],...p};this.sl(sid,items);List.render();Stats.upd();}await FBR.patch(`stores/${sid}/items/${iid}`,p);},
+  async rm(sid,iid){items=items.filter(x=>x.id!==iid);this.sl(sid,items);List.render();Stats.upd();await FBR.del(`stores/${sid}/items/${iid}`);},
+  async clean(sid){
+    const cut=subDays(today(),30);const del=items.filter(i=>i.expiryDate<=cut);
+    if(!del.length)return 0;items=items.filter(i=>i.expiryDate>cut);this.sl(sid,items);
+    await Promise.all(del.map(i=>FBR.del(`stores/${sid}/items/${i.id}`)));return del.length;
   },
-  async quickExport(storeId) {
-    const sitems=adminAllItems[storeId]||(await DB.fetchStore(storeId));
-    const s=STORES_CFG.find(x=>x.id===storeId);
-    writeXlsx(['Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'],
-      sitems.map(i=>[i.barcode,fmtDate(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtDate(i.discountDate):'',i.discountDays||'']),
-      `${s.name.replace(' ','_')}_${today()}.xlsx`);
-    toast(`✓ Izvezeno ${sitems.length} stavki`,'ok');
-  }
+  async fetch(sid){const d=await FBR.get(`stores/${sid}/items`);if(!d)return this.ll(sid);return Object.entries(d).map(([id,v])=>({id,...v}));},
+  async replAll(sid,arr){items=arr;this.sl(sid,arr);List.render();Stats.upd();const o={};arr.forEach(i=>o[i.id]=i);await FBR.set(`stores/${sid}/items`,o);}
 };
 
-/* ============================================================
-   EXCEL WRITER (shared)
-   ============================================================ */
-function writeXlsx(headers, dataRows, filename) {
-  if (typeof XLSX === 'undefined') {
-    toast('Excel biblioteka nije učitana — provjerite internet vezu i pokušajte ponovo.','err');
-    return;
-  }
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet([headers,...dataRows]);
-  const range=XLSX.utils.decode_range(ws['!ref']||'A1');
-  for (let R=1;R<=range.e.r;R++) {
-    const addr=XLSX.utils.encode_cell({r:R,c:0});
-    if (ws[addr]) { ws[addr].t='s'; ws[addr].z='@'; }
-  }
-  ws['!cols']=headers.map((_,i)=>({wch:i===0&&headers[0]==='Prodavnica'?16:i===0?22:18}));
-  XLSX.utils.book_append_sheet(wb,ws,'Rokovi');
-  XLSX.writeFile(wb,filename);
+function setSS(on){
+  ['sync-dot','sync-dot2'].forEach(id=>{const e=document.getElementById(id);if(e)e.className='online-dot'+(on?'':' off');});
+  const t=document.getElementById('sync-text'),b=document.getElementById('sync-status');
+  if(t)t.textContent=on?'Online — sinhronizacija aktivna':'Offline — lokalni podaci';
+  if(b){b.classList.toggle('hidden',on);b.classList.toggle('off',!on);}
 }
 
-/* ============================================================
-   UI UTILITIES
-   ============================================================ */
-const UI = {
-  toggleTheme() {
-    const cur=document.documentElement.getAttribute('data-theme');
-    const next=cur==='light'?'dark':'light';
-    document.documentElement.setAttribute('data-theme',next);
-    localStorage.setItem('knjiga-theme',next);
-    document.querySelectorAll('[onclick*="toggleTheme"]').forEach(b=>b.textContent=next==='dark'?'☀️':'🌙');
+/* ===== AUTH ===== */
+const Auth={
+  login(role,tid,sid,pin){
+    if(role==='super'){if(pin!==SA_PIN)return false;session={type:'super'};localStorage.setItem('ks',JSON.stringify(session));showPage('page-super');SuperAdmin.load();return true;}
+    if(role==='terrain'){const t=terrains.find(x=>x.id===tid);if(!t||pin!==t.pin)return false;session={type:'terrain',tid,tname:t.name};localStorage.setItem('ks',JSON.stringify(session));document.getElementById('ta-name').textContent=t.name;showPage('page-terrain');TerrainAdmin.load();return true;}
+    if(role==='store'){const s=stores.find(x=>x.id===sid);if(!s||pin!==s.pin)return false;const t=terrains.find(x=>x.id===s.terrainId);session={type:'store',sid,sname:s.name,tid:s.terrainId,tname:t?.name||''};localStorage.setItem('ks',JSON.stringify(session));startApp();return true;}
+    return false;
   },
-  openExport() { document.getElementById('exp-date-pick').value=today(); document.getElementById('exp-overlay').classList.add('open'); },
-  openBackup() { document.getElementById('bak-overlay').classList.add('open'); },
-  openAdminExport() { document.getElementById('aexp-date').value=today(); document.getElementById('admin-exp-overlay').classList.add('open'); },
-  openEmailScript() {
-    document.getElementById('email-script-block').textContent=getEmailScript();
-    document.getElementById('email-overlay').classList.add('open');
-  },
-  copyScript() {
-    navigator.clipboard.writeText(getEmailScript()).then(()=>toast('✓ Kod kopiran!','ok')).catch(()=>toast('Kopirajte ručno iz polja ispod','err'));
-  },
-  closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+  logout(){if(fbSub){fbSub();fbSub=null;}session=null;localStorage.removeItem('ks');items=[];adminData={};Login.reset();showPage('page-login');toast('Odjavljeni ste.');},
+  restore(){try{const s=JSON.parse(localStorage.getItem('ks'));if(s){session=s;return true;}}catch{}return false;}
 };
 
-/* ============================================================
-   EMAIL SCRIPT GENERATOR
-   ============================================================ */
-function getEmailScript() {
-  const fbUrl = 'https://knjiga-rokova-aman-default-rtdb.europe-west1.firebasedatabase.app';
-  return `// ================================================
-// Knjiga Rokova — Automatski email izvještaji
-// Aman maloprodaja
-// Pokretati: svaki dan u 06:00
-// ================================================
+function startApp(){
+  document.getElementById('app-store-name').textContent=session.sname;
+  document.getElementById('app-terrain-name').textContent=session.tname||'Knjiga Rokova';
+  showPage('page-app');Steps.go(1);
+  DB.connect(session.sid);
+  DB.clean(session.sid).then(n=>{if(n>0)setTimeout(()=>toast(`Automatski uklonjeno ${n} isteklih stavki`,'ok'),800);});
+  setTimeout(()=>document.getElementById('bc-input').focus(),200);
+}
 
-const FIREBASE_URL = '${fbUrl}';
+/* ===== LOGIN ===== */
+const Login={
+  _r:'',_tid:'',_sid:'',_pin:'',
+  setRole(r){
+    this._r=r;this._pin='';this._tid='';this._sid='';
+    ['super','terrain','store'].forEach(x=>{
+      document.getElementById('rb-'+x).classList.toggle('sel',x===r);
+      document.getElementById('rc-'+x).textContent=x===r?'✓':'';
+    });
+    document.getElementById('lr-terrain').classList.toggle('hidden',r==='super');
+    document.getElementById('lr-store').classList.toggle('hidden',r!=='store');
+    if(r==='super'){this._buildDots(SA_PIN.length);this._showPIN();}
+    else{this._populateTerrains();document.getElementById('pin-section').classList.add('hidden');}
+    document.getElementById('login-err').textContent='';
+  },
+  _populateTerrains(){
+    const sel=document.getElementById('ls-terrain');sel.innerHTML='<option value="">— Izaberite teren —</option>';
+    terrains.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);});
+  },
+  onTerrainChange(){
+    this._tid=document.getElementById('ls-terrain').value;this._pin='';this._sid='';
+    if(this._r==='terrain'){if(this._tid){this._buildDots(terrains.find(x=>x.id===this._tid)?.pin.length||4);this._showPIN();}else document.getElementById('pin-section').classList.add('hidden');}
+    if(this._r==='store'){
+      const sel=document.getElementById('ls-store');sel.innerHTML='<option value="">— Izaberite objekat —</option>';
+      stores.filter(s=>s.terrainId===this._tid).sort((a,b)=>a.name.localeCompare(b.name)).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});
+      document.getElementById('pin-section').classList.add('hidden');
+    }
+    document.getElementById('login-err').textContent='';
+  },
+  onStoreChange(){
+    this._sid=document.getElementById('ls-store').value;this._pin='';
+    if(this._sid){const s=stores.find(x=>x.id===this._sid);this._buildDots(s?.pin.length||3);this._showPIN();}
+    else document.getElementById('pin-section').classList.add('hidden');
+    document.getElementById('login-err').textContent='';
+  },
+  _buildDots(n){const c=document.getElementById('pin-dots');c.innerHTML='';for(let i=0;i<n;i++){const d=document.createElement('div');d.className='dot';d.id='pd'+i;c.appendChild(d);}},
+  _showPIN(){this._updDots();document.getElementById('pin-section').classList.remove('hidden');document.getElementById('login-btn').style.display='none';document.getElementById('login-err').textContent='';},
+  _expLen(){if(this._r==='super')return SA_PIN.length;if(this._r==='terrain')return terrains.find(x=>x.id===this._tid)?.pin.length||4;if(this._r==='store')return stores.find(x=>x.id===this._sid)?.pin.length||3;return 4;},
+  key(k){const m=this._expLen();if(this._pin.length>=m)return;this._pin+=k;this._updDots();document.getElementById('login-err').textContent='';document.getElementById('login-btn').style.display='block';if(this._pin.length===m)setTimeout(()=>this.attempt(),180);},
+  del(){this._pin=this._pin.slice(0,-1);this._updDots();document.getElementById('login-err').textContent='';document.getElementById('login-btn').style.display=this._pin.length>0?'block':'none';},
+  attempt(){if(!this._r||!this._pin)return;const ok=Auth.login(this._r,this._tid,this._sid,this._pin);if(!ok){document.getElementById('login-err').textContent='✗ Pogrešan PIN — pokušajte ponovo';this._pin='';this._updDots();document.getElementById('login-btn').style.display='none';}},
+  _updDots(){const n=this._expLen();for(let i=0;i<n;i++){const d=document.getElementById('pd'+i);if(d)d.className='dot'+(i<this._pin.length?' filled':'');}},
+  reset(){this._r='';this._pin='';this._tid='';this._sid='';['super','terrain','store'].forEach(x=>{document.getElementById('rb-'+x).classList.remove('sel');document.getElementById('rc-'+x).textContent='';});document.getElementById('lr-terrain').classList.add('hidden');document.getElementById('lr-store').classList.add('hidden');document.getElementById('pin-section').classList.add('hidden');document.getElementById('login-btn').style.display='none';document.getElementById('login-err').textContent='';const c=document.getElementById('pin-dots');if(c)c.innerHTML='';}
+};
 
-const STORES = [
-  { id: 'aman-178', name: 'Aman 178', email: 'aman178@aman.co.rs' },
-  { id: 'aman-225', name: 'Aman 225', email: 'aman225@aman.co.rs' },
-  { id: 'aman-266', name: 'Aman 266', email: 'aman266@aman.co.rs' },
-  { id: 'aman-274', name: 'Aman 274', email: 'aman274@aman.co.rs' },
-  { id: 'aman-296', name: 'Aman 296', email: 'aman296@aman.co.rs' },
-  { id: 'aman-311', name: 'Aman 311', email: 'aman311@aman.co.rs' },
-  { id: 'aman-324', name: 'Aman 324', email: 'aman324@aman.co.rs' },
-  { id: 'aman-329', name: 'Aman 329', email: 'aman329@aman.co.rs' },
-  { id: 'aman-335', name: 'Aman 335', email: 'aman335@aman.co.rs' },
-  { id: 'aman-347', name: 'Aman 347', email: 'aman347@aman.co.rs' },
-];
+/* ===== WIZARD ===== */
+let cBC='',cDate='';
+const Steps={
+  go(n){[1,2,3,4].forEach(i=>{document.getElementById('s'+i).classList.toggle('hidden',i!==n);if(i===n)document.getElementById('s'+i).classList.add('anim');const s=document.getElementById('seg'+i);if(s)s.className='step-seg'+(i<n?' done':i===n?' active':'');});},
+  confirmBarcode(){const v=document.getElementById('bc-input').value.trim();if(!v){toast('Unesite barkod!','err');return;}cBC=v;['chip-bc','chip-bc2','chip-bc3'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=v;});document.getElementById('exp-date').value=today();this.go(2);},
+  confirmDate(){const v=document.getElementById('exp-date').value;if(!v){toast('Izaberite datum!','err');return;}cDate=v;['chip-dt','chip-dt2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fmtD(v);});this.go(3);},
+  setDiscount(h){if(!h){this._save(false,null);}else{document.getElementById('disc-days').value='';this.go(4);}},
+  confirmDays(){const d=document.getElementById('disc-days').value;if(!d){toast('Izaberite broj dana!','err');return;}this._save(true,parseInt(d));},
+  async _save(hd,dd){
+    const dd2=hd?subDays(cDate,dd):null;
+    const item={id:uid(),barcode:cBC,expiryDate:cDate,hasDiscount:hd,discountDays:dd,discountDate:dd2,createdAt:new Date().toISOString()};
+    await DB.add(session.sid,item);toast(`✓ Artikal ${cBC} sačuvan!`,'ok');
+    document.getElementById('bc-input').value='';cBC='';cDate='';this.go(1);setTimeout(()=>document.getElementById('bc-input').focus(),100);
+  }
+};
+
+/* ===== LIST & STATS ===== */
+const List={
+  _f:'all',
+  filter(f,btn){this._f=f;document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');this.render();},
+  render(){
+    const t=today();let data=[...items];
+    if(this._f==='discount')data=data.filter(i=>i.hasDiscount);
+    else if(this._f==='today')data=data.filter(i=>i.expiryDate===t);
+    else if(this._f==='expired')data=data.filter(i=>i.expiryDate<t);
+    const el=document.getElementById('items-list');if(!el)return;
+    if(!data.length){el.innerHTML='<div class="empty-state"><div class="empty-ico">📦</div>Nema stavki za prikaz</div>';return;}
+    el.innerHTML=data.map(item=>{let cls='item-row';if(item.expiryDate<t)cls+=' expired';else if(item.expiryDate===t)cls+=' expiring';return`<div class="${cls}" onclick="Edit.open('${item.id}')"><div class="item-bc">${esc(item.barcode)}</div><div class="item-dt">${fmtD(item.expiryDate)}</div>${item.hasDiscount?`<span class="badge badge-d">-${item.discountDays}d</span>`:`<span class="badge badge-n">Bez</span>`}</div>`;}).join('');
+  }
+};
+const Stats={upd(){const t=today();document.getElementById('sn-total').textContent=items.length;document.getElementById('sn-disc').textContent=items.filter(i=>i.hasDiscount).length;document.getElementById('sn-today').textContent=items.filter(i=>i.expiryDate===t).length;}};
+
+/* ===== CAMERA ===== */
+const Cam={
+  open(){document.getElementById('cam-input').value='';document.getElementById('cam-input').click();},
+  processImage(ev){
+    const f=ev.target.files[0];if(!f)return;
+    document.getElementById('cam-status').textContent='Čitanje barkoda...';document.getElementById('cam-overlay').classList.add('open');
+    const url=URL.createObjectURL(f);const img=new Image();
+    img.onload=()=>{if('BarcodeDetector' in window){new BarcodeDetector({formats:['ean_13','ean_8','code_128','code_39','upc_a','upc_e','qr_code']}).detect(img).then(cs=>{URL.revokeObjectURL(url);cs.length>0?this._code(cs[0].rawValue):this._quagga(url,img);}).catch(()=>this._quagga(url,img));}else this._quagga(url,img);};
+    img.onerror=()=>{URL.revokeObjectURL(url);document.getElementById('cam-overlay').classList.remove('open');toast('Greška slike!','err');};img.src=url;
+  },
+  _quagga(url,img){if(typeof Quagga==='undefined'){document.getElementById('cam-overlay').classList.remove('open');toast('Unesite barkod ručno.','err');return;}const s=Math.min(1,1200/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);Quagga.decodeSingle({decoder:{readers:['ean_reader','ean_8_reader','code_128_reader','code_39_reader','upc_reader','upc_e_reader']},locate:true,src:c.toDataURL('image/jpeg',.92)},r=>{URL.revokeObjectURL(url);document.getElementById('cam-overlay').classList.remove('open');r?.codeResult?.code?this._code(r.codeResult.code):toast('Barkod nije prepoznat — unesite ručno.','err');});},
+  _code(c){document.getElementById('cam-overlay').classList.remove('open');const i=document.getElementById('bc-input');i.value=c;i.style.borderColor='var(--success)';setTimeout(()=>i.style.borderColor='',600);toast('✓ Barkod: '+c,'ok');}
+};
+
+/* ===== EDIT ===== */
+const Edit={
+  _id:null,
+  open(id){this._id=id;const item=items.find(i=>i.id===id);if(!item)return;document.getElementById('ed-bc').value=item.barcode;document.getElementById('ed-date').value=item.expiryDate;document.getElementById('ed-disc').value=item.hasDiscount?'1':'0';document.getElementById('ed-days').value=item.discountDays||'5';this.togDays();document.getElementById('edit-overlay').classList.add('open');},
+  togDays(){document.getElementById('ed-drow').classList.toggle('hidden',document.getElementById('ed-disc').value!=='1');},
+  async save(){const bc=document.getElementById('ed-bc').value.trim(),ed=document.getElementById('ed-date').value;if(!bc||!ed){toast('Popunite polja!','err');return;}const hd=document.getElementById('ed-disc').value==='1';const dd=hd?parseInt(document.getElementById('ed-days').value):null;await DB.upd(session.sid,this._id,{barcode:bc,expiryDate:ed,hasDiscount:hd,discountDays:dd,discountDate:hd?subDays(ed,dd):null});UI.cl('edit-overlay');toast('✓ Izmjena sačuvana','ok');},
+  async del(){if(!confirm('Obrisati?'))return;await DB.rm(session.sid,this._id);UI.cl('edit-overlay');toast('Obrisano','ok');}
+};
+
+/* ===== EXPORT (store) ===== */
+const Export={
+  _t:'expiry',
+  sel(t){this._t=t;document.getElementById('eo-exp').classList.toggle('on',t==='expiry');document.getElementById('eo-disc').classList.toggle('on',t==='discount');},
+  go(){
+    const date=document.getElementById('exp-dp').value;if(!date){toast('Izaberite datum!','err');return;}
+    const s=stores.find(x=>x.id===session.sid);let rows,headers,fn;
+    if(this._t==='expiry'){const f=items.filter(i=>i.expiryDate===date);if(!f.length){toast('Nema artikala!','err');return;}headers=['Barkod','Datum isteka roka'];rows=f.map(i=>[i.barcode,fmtD(i.expiryDate)]);fn=`isteci_${s?.name||''}_${date}.xlsx`;}
+    else{const f=items.filter(i=>i.hasDiscount&&i.discountDate===date);if(!f.length){toast('Nema artikala za sniženje!','err');return;}headers=['Barkod','Datum sniženja','Datum isteka roka'];rows=f.map(i=>[i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]);fn=`snizenje_${s?.name||''}_${date}.xlsx`;}
+    xlsxWrite(headers,rows,fn);UI.cl('exp-overlay');toast(`✓ Izvezeno ${rows.length} artikala`,'ok');
+  }
+};
+
+/* ===== BACKUP ===== */
+const Backup={
+  json(){const s=stores.find(x=>x.id===session.sid);const b=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`backup_${s?.name||session.sid}_${today()}.json`;a.click();toast('✓ JSON backup','ok');},
+  excel(){if(!items.length){toast('Nema podataka!','err');return;}const s=stores.find(x=>x.id===session.sid);xlsxWrite(['Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'],items.map(i=>[i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtD(i.discountDate):'',i.discountDays||'']),`svi_${s?.name||''}_${today()}.xlsx`);toast(`✓ Izvezeno ${items.length}`,'ok');},
+  trigImport(){document.getElementById('imp-file').click();},
+  async importJSON(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=async e=>{try{const a=JSON.parse(e.target.result);if(!Array.isArray(a))throw 0;const s=stores.find(x=>x.id===session.sid);if(!confirm(`Uvesti ${a.length} stavki u ${s?.name}?`))return;await DB.replAll(session.sid,a);UI.cl('bak-overlay');toast(`✓ Uvezeno ${a.length}`,'ok');}catch{toast('Greška JSON!','err');}};r.readAsText(f);ev.target.value='';}
+};
+
+/* ===== SUPER ADMIN ===== */
+const SuperAdmin={
+  async load(){document.getElementById('sa-grid').innerHTML='<div class="empty-state"><div class="spinner"></div></div>';adminData={};await Promise.all(stores.map(async s=>{adminData[s.id]=await DB.fetch(s.id);}));this.render();},
+  async refresh(){toast('Osvježavam...');await CDB.load();await this.load();toast('✓ Osvježeno','ok');},
+  render(){
+    const t=today();let tot=0,tod=0;
+    document.getElementById('sa-trn').textContent=terrains.length;document.getElementById('sa-str').textContent=stores.length;
+    const cards=terrains.map(tr=>{
+      const ss=stores.filter(s=>s.terrainId===tr.id);const si=ss.flatMap(s=>adminData[s.id]||[]);const todN=si.filter(i=>i.expiryDate===t).length;const expN=si.filter(i=>i.expiryDate<t).length;tot+=si.length;tod+=todN;
+      return`<div class="trn-card" onclick="SuperAdmin.openTerrain('${tr.id}')"><div class="tc-name">${esc(tr.name)}</div><div class="tc-stats"><div class="tc-s">Obj: <span>${ss.length}</span></div><div class="tc-s">Stavki: <span>${si.length}</span></div>${todN>0?`<div class="tc-s tc-warn">Danas: <span>${todN}</span></div>`:''}${expN>0?`<div class="tc-s tc-warn">Isteklo: <span>${expN}</span></div>`:''}</div></div>`;
+    }).join('');
+    document.getElementById('sa-grid').innerHTML=cards||'<div class="empty-state"><div class="empty-ico">🏔️</div>Nema terena — dodajte u Podešavanjima</div>';
+    document.getElementById('sa-tot').textContent=tot;document.getElementById('sa-tod').textContent=tod;
+  },
+  openTerrain(tid){
+    const tr=terrains.find(x=>x.id===tid);const ss=stores.filter(s=>s.terrainId===tid);const t=today();
+    let html=`<div style="font-size:.78rem;color:var(--text3);margin-bottom:9px">${esc(tr.name)} — ${ss.length} objekat(a)</div>`;
+    html+=ss.map(s=>{const si=adminData[s.id]||[];const tod=si.filter(i=>i.expiryDate===t).length;const exp=si.filter(i=>i.expiryDate<t).length;return`<div class="cfg-row"><div class="cfg-row-main"><div class="cfg-row-name">${esc(s.name)} <span style="font-size:.68rem;font-weight:400;color:var(--text3)">${si.length} stavki${tod>0?` · <span style="color:var(--danger)">${tod} danas</span>`:''}${exp>0?` · <span style="color:var(--danger)">${exp} isteklo</span>`:''}</span></div><div class="cfg-row-sub">${esc(s.email)}</div></div></div>`;}).join('');
+    if(!ss.length)html='<div class="empty-state"><div class="empty-ico">🏪</div>Nema objekata u terenu</div>';
+    const ov=document.createElement('div');ov.className='overlay open';ov.style.zIndex='600';
+    ov.innerHTML=`<div class="modal"><div class="modal-title">🏔️ ${esc(tr.name)}</div>${html}<button class="btn btn-ghost btn-full mt8" onclick="this.closest('.overlay').remove()">Zatvori</button></div>`;
+    ov.onclick=e=>{if(e.target===ov)ov.remove();};document.body.appendChild(ov);
+  }
+};
+
+/* ===== TERRAIN ADMIN ===== */
+const TerrainAdmin={
+  async load(){const ss=stores.filter(s=>s.terrainId===session.tid);adminData={};await Promise.all(ss.map(async s=>{adminData[s.id]=await DB.fetch(s.id);}));this.render();},
+  async refresh(){toast('Osvježavam...');await this.load();toast('✓ Osvježeno','ok');},
+  render(){
+    const t=today();const ss=stores.filter(s=>s.terrainId===session.tid);let tot=0,todN=0,discN=0;
+    const cards=ss.map(s=>{const si=adminData[s.id]||[];const tod=si.filter(i=>i.expiryDate===t).length;const exp=si.filter(i=>i.expiryDate<t).length;tot+=si.length;todN+=tod;discN+=si.filter(i=>i.hasDiscount).length;
+      return`<div class="trn-card" onclick="TerrainAdmin.openStore('${s.id}')"><div class="tc-name">${esc(s.name)}</div><div class="tc-stats"><div class="tc-s">Stavki: <span>${si.length}</span></div>${tod>0?`<div class="tc-s tc-warn">Danas: <span>${tod}</span></div>`:''}${exp>0?`<div class="tc-s tc-warn">Isteklo: <span>${exp}</span></div>`:''}</div></div>`;
+    }).join('');
+    document.getElementById('ta-grid').innerHTML=cards||'<div class="empty-state"><div class="empty-ico">🏪</div>Nema objekata</div>';
+    document.getElementById('ta-str').textContent=ss.length;document.getElementById('ta-tot').textContent=tot;document.getElementById('ta-tod').textContent=todN;document.getElementById('ta-disc').textContent=discN;
+  },
+  openStore(sid){
+    const s=stores.find(x=>x.id===sid);const si=adminData[sid]||[];const t=today();
+    const rows=si.length?si.sort((a,b)=>a.expiryDate.localeCompare(b.expiryDate)).map(item=>{let cls='item-row ro';if(item.expiryDate<t)cls+=' expired';else if(item.expiryDate===t)cls+=' expiring';return`<div class="${cls}"><div class="item-bc">${esc(item.barcode)}</div><div class="item-dt">${fmtD(item.expiryDate)}</div>${item.hasDiscount?`<span class="badge badge-d">-${item.discountDays}d</span>`:`<span class="badge badge-n">Bez</span>`}</div>`;}).join(''):'<div class="empty-state"><div class="empty-ico">📦</div>Nema stavki</div>';
+    const ov=document.createElement('div');ov.className='overlay open';ov.style.zIndex='600';
+    ov.innerHTML=`<div class="modal"><div class="modal-title">🏪 ${esc(s.name)}</div><div style="font-size:.72rem;color:var(--text3);margin-bottom:9px">${esc(s.email)}</div><div class="list-wrap" style="max-height:290px">${rows}</div><button class="btn btn-ghost btn-full mt8" onclick="this.closest('.overlay').remove()">Zatvori</button></div>`;
+    ov.onclick=e=>{if(e.target===ov)ov.remove();};document.body.appendChild(ov);
+  }
+};
+
+/* ===== CONFIG MANAGER ===== */
+const CfgMgr={
+  _et:'',_eid:null,
+  open(){this.tab('trn');document.getElementById('cfg-overlay').classList.add('open');},
+  tab(t){
+    document.getElementById('cfg-trn-tab').classList.toggle('hidden',t!=='trn');document.getElementById('cfg-str-tab').classList.toggle('hidden',t!=='str');
+    document.getElementById('tab-trn').classList.toggle('on',t==='trn');document.getElementById('tab-str').classList.toggle('on',t!=='trn');
+    if(t==='trn')this.renderTerrains();else this.renderStores();
+  },
+  renderTerrains(){
+    const el=document.getElementById('cfg-trn-list');
+    if(!terrains.length){el.innerHTML='<div class="empty-state">Nema terena</div>';return;}
+    el.innerHTML=terrains.map(tr=>`<div class="cfg-row"><div class="cfg-row-main"><div class="cfg-row-name">${esc(tr.name)}</div><div class="cfg-row-sub">Admin PIN: ${'•'.repeat(tr.pin.length)} | ${stores.filter(s=>s.terrainId===tr.id).length} obj.</div></div><div class="cfg-actions"><button class="cfg-btn" onclick="CfgMgr.editT('${tr.id}')">✏️</button><button class="cfg-btn del" onclick="CfgMgr.delT('${tr.id}')">🗑️</button></div></div>`).join('');
+  },
+  renderStores(){
+    const f=document.getElementById('cfg-str-filter');f.innerHTML='<option value="__all__">Svi tereni</option>';terrains.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;f.appendChild(o);});
+    const sel=f.value;const ss=sel==='__all__'?stores:stores.filter(s=>s.terrainId===sel);
+    const el=document.getElementById('cfg-str-list');
+    if(!ss.length){el.innerHTML='<div class="empty-state">Nema objekata</div>';return;}
+    el.innerHTML=ss.sort((a,b)=>{const ta=terrains.find(x=>x.id===a.terrainId)?.name||'';const tb=terrains.find(x=>x.id===b.terrainId)?.name||'';return ta.localeCompare(tb)||a.name.localeCompare(b.name);}).map(s=>{const tn=terrains.find(x=>x.id===s.terrainId)?.name||'?';return`<div class="cfg-row"><div class="cfg-row-main"><div class="cfg-row-name">${esc(s.name)}</div><div class="cfg-row-sub">${esc(tn)} | ${esc(s.email)} | PIN:${esc(s.pin)}</div></div><div class="cfg-actions"><button class="cfg-btn" onclick="CfgMgr.editS('${s.id}')">✏️</button><button class="cfg-btn del" onclick="CfgMgr.delS('${s.id}')">🗑️</button></div></div>`;}).join('');
+  },
+  addTerrain(){this._et='t';this._eid=null;document.getElementById('cfe-title').textContent='➕ Novi teren';document.getElementById('cfe-form').innerHTML=`<div class="frow"><label class="flbl">Naziv</label><input type="text" id="cfe-n" placeholder="npr. Teren 2"></div><div class="frow"><label class="flbl">Admin PIN (brojevi)</label><input type="text" id="cfe-p" inputmode="numeric" maxlength="8"></div>`;document.getElementById('cfg-edit-overlay').classList.add('open');},
+  editT(id){this._et='t';this._eid=id;const t=terrains.find(x=>x.id===id);if(!t)return;document.getElementById('cfe-title').textContent='✏️ Uredi teren';document.getElementById('cfe-form').innerHTML=`<div class="frow"><label class="flbl">Naziv</label><input type="text" id="cfe-n" value="${esc(t.name)}"></div><div class="frow"><label class="flbl">Admin PIN</label><input type="text" id="cfe-p" value="${esc(t.pin)}" inputmode="numeric" maxlength="8"></div>`;document.getElementById('cfg-edit-overlay').classList.add('open');},
+  async delT(id){const t=terrains.find(x=>x.id===id);if(!confirm(`Obrisati teren "${t?.name}"?`))return;const ok=await CDB.delTerrain(id);if(ok){this.renderTerrains();toast('Teren obrisan','ok');}},
+  addStore(){this._et='s';this._eid=null;document.getElementById('cfe-title').textContent='➕ Novi objekat';document.getElementById('cfe-form').innerHTML=this._sForm(null);document.getElementById('cfg-edit-overlay').classList.add('open');},
+  editS(id){this._et='s';this._eid=id;const s=stores.find(x=>x.id===id);if(!s)return;document.getElementById('cfe-title').textContent='✏️ Uredi objekat';document.getElementById('cfe-form').innerHTML=this._sForm(s);document.getElementById('cfg-edit-overlay').classList.add('open');},
+  _sForm(s){const opts=terrains.map(t=>`<option value="${t.id}"${s?.terrainId===t.id?' selected':''}>${esc(t.name)}</option>`).join('');return`<div class="frow"><label class="flbl">Naziv</label><input type="text" id="cfe-n" value="${esc(s?.name||'')}"></div><div class="frow"><label class="flbl">Email</label><input type="email" id="cfe-e" value="${esc(s?.email||'')}"></div><div class="frow"><label class="flbl">PIN</label><input type="text" id="cfe-p" value="${esc(s?.pin||'')}" inputmode="numeric" maxlength="8"></div><div class="frow"><label class="flbl">Teren</label><select id="cfe-t">${opts}</select></div>`;},
+  async delS(id){const ok=await CDB.delStore(id);if(ok){this.renderStores();toast('Objekat obrisan','ok');}},
+  async saveEdit(){
+    const name=document.getElementById('cfe-n')?.value.trim();const pin=document.getElementById('cfe-p')?.value.trim();
+    if(!name||!pin){toast('Popunite polja!','err');return;}
+    if(this._et==='t'){if(this._eid)await CDB.updTerrain(this._eid,{name,pin});else await CDB.addTerrain(name,pin);UI.cl('cfg-edit-overlay');this.renderTerrains();toast('✓ Teren sačuvan','ok');}
+    else{const email=document.getElementById('cfe-e')?.value.trim();const tid=document.getElementById('cfe-t')?.value;if(!email||!tid){toast('Popunite sva polja!','err');return;}if(this._eid)await CDB.updStore(this._eid,{name,email,pin,terrainId:tid});else await CDB.addStore(name,email,pin,tid);UI.cl('cfg-edit-overlay');this.renderStores();toast('✓ Objekat sačuvan','ok');}
+  }
+};
+
+/* ===== ADMIN EXPORT ===== */
+const AE={
+  _t:'expiry',
+  sel(t){this._t=t;['eo','ed','ea'].forEach((x,i)=>document.getElementById('ae-'+x).classList.toggle('on',['expiry','discount','all'][i]===t));document.getElementById('ae-drow').style.display=t==='all'?'none':'block';},
+  onTrn(){const tid=document.getElementById('ae-trn').value;const sel=document.getElementById('ae-str');sel.innerHTML='<option value="__all__">Svi objekti</option>';(tid==='__all__'?stores:stores.filter(s=>s.terrainId===tid)).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});},
+  async go(){
+    const tid=document.getElementById('ae-trn').value;const sid=document.getElementById('ae-str').value;const date=this._t!=='all'?document.getElementById('ae-dp').value:'';
+    if(this._t!=='all'&&!date){toast('Izaberite datum!','err');return;}
+    let ss=sid!=='__all__'?stores.filter(s=>s.id===sid):(tid!=='__all__'?stores.filter(s=>s.terrainId===tid):stores);
+    const multi=ss.length>1;const allRows=[];
+    for(const s of ss){let si=adminData[s.id]||(await DB.fetch(s.id));if(this._t==='expiry')si=si.filter(i=>i.expiryDate===date);else if(this._t==='discount')si=si.filter(i=>i.hasDiscount&&i.discountDate===date);if(multi)si=si.map(i=>({...i,_s:s.name}));allRows.push(...si);}
+    if(!allRows.length){toast('Nema podataka!','err');return;}
+    let h,r;
+    if(this._t==='expiry'){h=multi?['Prodavnica','Barkod','Datum isteka']:['Barkod','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.expiryDate)]:[i.barcode,fmtD(i.expiryDate)]);}
+    else if(this._t==='discount'){h=multi?['Prodavnica','Barkod','Datum sniženja','Datum isteka']:['Barkod','Datum sniženja','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]:[i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]);}
+    else{h=multi?['Prodavnica','Barkod','Datum isteka','Sniženje']:['Barkod','Datum isteka','Sniženje'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne']:[i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne']);}
+    xlsxWrite(h,r,`admin_izvoz_${today()}.xlsx`);UI.cl('adm-exp-overlay');toast(`✓ Izvezeno ${allRows.length} artikala`,'ok');
+  }
+};
+
+/* ===== TERRAIN EXPORT ===== */
+const TE={
+  _t:'expiry',
+  sel(t){this._t=t;['eo','ed','ea'].forEach((x,i)=>document.getElementById('te-'+x).classList.toggle('on',['expiry','discount','all'][i]===t));document.getElementById('te-drow').style.display=t==='all'?'none':'block';},
+  async go(){
+    const sid=document.getElementById('te-str').value;const date=this._t!=='all'?document.getElementById('te-dp').value:'';
+    if(this._t!=='all'&&!date){toast('Izaberite datum!','err');return;}
+    const ss=sid==='__all__'?stores.filter(s=>s.terrainId===session.tid):stores.filter(s=>s.id===sid);
+    const multi=ss.length>1;const allRows=[];
+    for(const s of ss){let si=adminData[s.id]||(await DB.fetch(s.id));if(this._t==='expiry')si=si.filter(i=>i.expiryDate===date);else if(this._t==='discount')si=si.filter(i=>i.hasDiscount&&i.discountDate===date);if(multi)si=si.map(i=>({...i,_s:s.name}));allRows.push(...si);}
+    if(!allRows.length){toast('Nema podataka!','err');return;}
+    let h,r;
+    if(this._t==='expiry'){h=multi?['Prodavnica','Barkod','Datum isteka']:['Barkod','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.expiryDate)]:[i.barcode,fmtD(i.expiryDate)]);}
+    else if(this._t==='discount'){h=multi?['Prodavnica','Barkod','Datum sniženja','Datum isteka']:['Barkod','Datum sniženja','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]:[i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]);}
+    else{h=multi?['Prodavnica','Barkod','Datum isteka']:['Barkod','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.expiryDate)]:[i.barcode,fmtD(i.expiryDate)]);}
+    xlsxWrite(h,r,`teren_${session.tname||''}_${today()}.xlsx`);UI.cl('trn-exp-overlay');toast(`✓ Izvezeno ${allRows.length}`,'ok');
+  }
+};
+
+/* ===== XLSX ===== */
+function xlsxWrite(h,rows,fn){
+  if(typeof XLSX==='undefined'){toast('Excel nije učitan!','err');return;}
+  const wb=XLSX.utils.book_new();const ws=XLSX.utils.aoa_to_sheet([h,...rows]);
+  const rng=XLSX.utils.decode_range(ws['!ref']||'A1');
+  for(let R=1;R<=rng.e.r;R++){const a=XLSX.utils.encode_cell({r:R,c:0});if(ws[a]){ws[a].t='s';ws[a].z='@';}}
+  ws['!cols']=h.map((_,i)=>({wch:i===0&&h[0]==='Prodavnica'?16:i===0?22:18}));
+  XLSX.utils.book_append_sheet(wb,ws,'Rokovi');XLSX.writeFile(wb,fn);
+}
+
+/* ===== UI ===== */
+const UI={
+  toggleTheme(){const n=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('knjiga-theme',n);document.querySelectorAll('[onclick*="toggleTheme"]').forEach(b=>b.textContent=n==='dark'?'☀️':'🌙');},
+  openExport(){document.getElementById('exp-dp').value=today();document.getElementById('exp-overlay').classList.add('open');},
+  openBackup(){document.getElementById('bak-overlay').classList.add('open');},
+  openAdminExport(){
+    const s=document.getElementById('ae-trn');s.innerHTML='<option value="__all__">Svi tereni</option>';terrains.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;s.appendChild(o);});
+    AE.onTrn();document.getElementById('ae-dp').value=today();document.getElementById('adm-exp-overlay').classList.add('open');
+  },
+  openTerrainExport(){
+    document.getElementById('te-name').textContent=session.tname||'';
+    const sel=document.getElementById('te-str');sel.innerHTML='<option value="__all__">Svi objekti</option>';
+    stores.filter(s=>s.terrainId===session.tid).forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.name;sel.appendChild(o);});
+    document.getElementById('te-dp').value=today();document.getElementById('trn-exp-overlay').classList.add('open');
+  },
+  openEmailScript(){document.getElementById('email-block').textContent=emailScript();document.getElementById('email-overlay').classList.add('open');},
+  copyScript(){navigator.clipboard.writeText(emailScript()).then(()=>toast('✓ Kopirano!','ok')).catch(()=>toast('Kopirajte ručno','err'));},
+  cl(id){document.getElementById(id).classList.remove('open');}
+};
+
+/* ===== EMAIL SCRIPT ===== */
+function emailScript(){return`// Knjiga Rokova — Automatski email izvještaji
+// Dinamički čita objekte iz Firebase
+// Pokrenuti: svaki dan u 06:00
+
+const FIREBASE_URL = '${FB}';
 
 function sendDailyReports() {
   const tmrw = getTomorrow();
-  Logger.log('Slanje izvještaja za: ' + tmrw);
-
-  STORES.forEach(store => {
+  Logger.log('Slanje za: ' + tmrw);
+  const res = UrlFetchApp.fetch(FIREBASE_URL + '/storeConfig.json', { muteHttpExceptions: true });
+  if (res.getResponseCode() !== 200) { Logger.log('Greška čitanja'); return; }
+  const data = JSON.parse(res.getContentText());
+  if (!data) { Logger.log('Nema konfiguracije'); return; }
+  Object.values(data).forEach(store => {
     try {
-      const allItems = getStoreItems(store.id);
-      const expiring   = allItems.filter(i => i.expiryDate === tmrw);
-      const discounting = allItems.filter(i => i.hasDiscount && i.discountDate === tmrw);
-
-      if (expiring.length === 0 && discounting.length === 0) {
-        Logger.log(store.name + ': nema stavki za sutra — email nije poslan.');
-        return;
-      }
-      sendEmail(store, tmrw, expiring, discounting);
-      Logger.log(store.name + ': email poslan (' + expiring.length + ' isteka, ' + discounting.length + ' sniženja)');
-    } catch(e) {
-      Logger.log('GREŠKA za ' + store.name + ': ' + e.message);
-    }
+      const all = getItems(store.id);
+      const exp = all.filter(i => i.expiryDate === tmrw);
+      const disc = all.filter(i => i.hasDiscount && i.discountDate === tmrw);
+      if (!exp.length && !disc.length) { Logger.log(store.name + ': nema stavki'); return; }
+      sendEmail(store, tmrw, exp, disc);
+      Logger.log(store.name + ': poslan (' + exp.length + ' isteka, ' + disc.length + ' sniženja)');
+    } catch(e) { Logger.log('GREŠKA ' + store.name + ': ' + e.message); }
   });
 }
 
-function getStoreItems(storeId) {
-  const url = FIREBASE_URL + '/stores/' + storeId + '/items.json';
-  const res  = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-  if (res.getResponseCode() !== 200) return [];
-  const data = JSON.parse(res.getContentText());
-  if (!data) return [];
-  return Object.values(data);
+function getItems(storeId) {
+  const r = UrlFetchApp.fetch(FIREBASE_URL + '/stores/' + storeId + '/items.json', { muteHttpExceptions: true });
+  if (r.getResponseCode() !== 200) return [];
+  const d = JSON.parse(r.getContentText());
+  return d ? Object.values(d) : [];
 }
 
 function getTomorrow() {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
+  const d = new Date(); d.setDate(d.getDate() + 1);
   return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
 }
 
-function fmt(s) {
-  if (!s) return '';
-  const p = s.split('-');
-  return p[2] + '.' + p[1] + '.' + p[0] + '.';
-}
+function fmt(s) { if (!s) return ''; const p = s.split('-'); return p[2]+'.'+p[1]+'.'+p[0]+'.'; }
 
-function sendEmail(store, date, expiring, discounting) {
-  const subject = '📋 Knjiga Rokova — ' + store.name + ' — ' + fmt(date);
+function sendEmail(store, date, exp, disc) {
+  const subj = '📋 Knjiga Rokova — ' + store.name + ' — ' + fmt(date);
   let html = '<div style="font-family:Arial,sans-serif;max-width:640px">';
-  html += '<h2 style="color:#B86A00;border-bottom:2px solid #E8B86D;padding-bottom:8px">📋 Knjiga Rokova — ' + store.name + '</h2>';
-  html += '<p style="color:#7A5C3A">Automatski izvještaj za datum: <strong>' + fmt(date) + '</strong></p>';
-
-  if (expiring.length > 0) {
-    html += '<h3 style="color:#C0392B">🔴 Artikli čiji rok ističe sutra (' + expiring.length + ')</h3>';
-    html += '<table border="1" cellpadding="7" cellspacing="0" style="border-collapse:collapse;width:100%;border-color:#DDD">';
-    html += '<tr style="background:#FFF3E0"><th>Barkod</th><th>Datum isteka</th><th>Sniženje</th></tr>';
-    expiring.forEach(i => {
-      html += '<tr><td style="font-family:monospace">' + i.barcode + '</td><td>' + fmt(i.expiryDate) + '</td><td>' + (i.hasDiscount ? 'Da (' + i.discountDays + ' dana)' : 'Ne') + '</td></tr>';
-    });
+  html += '<h2 style="color:#B86A00;border-bottom:2px solid #E8B86D;padding-bottom:8px">📋 ' + store.name + '</h2>';
+  html += '<p>Izvještaj za: <strong>' + fmt(date) + '</strong></p>';
+  if (exp.length) {
+    html += '<h3 style="color:#C0392B">🔴 Rok ističe sutra (' + exp.length + ')</h3>';
+    html += '<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%"><tr style="background:#FFF3E0"><th>Barkod</th><th>Datum isteka</th><th>Sniženje</th></tr>';
+    exp.forEach(i => { html += '<tr><td style="font-family:monospace">' + i.barcode + '</td><td>' + fmt(i.expiryDate) + '</td><td>' + (i.hasDiscount ? 'Da (' + i.discountDays + 'd)' : 'Ne') + '</td></tr>'; });
     html += '</table>';
   }
-
-  if (discounting.length > 0) {
-    html += '<h3 style="color:#E65100">🏷️ Artikli za sniženje sutra (' + discounting.length + ')</h3>';
-    html += '<table border="1" cellpadding="7" cellspacing="0" style="border-collapse:collapse;width:100%;border-color:#DDD">';
-    html += '<tr style="background:#FFF3E0"><th>Barkod</th><th>Datum sniženja</th><th>Datum isteka</th></tr>';
-    discounting.forEach(i => {
-      html += '<tr><td style="font-family:monospace">' + i.barcode + '</td><td>' + fmt(i.discountDate) + '</td><td>' + fmt(i.expiryDate) + '</td></tr>';
-    });
+  if (disc.length) {
+    html += '<h3 style="color:#E65100">🏷️ Za sniženje sutra (' + disc.length + ')</h3>';
+    html += '<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%"><tr style="background:#FFF3E0"><th>Barkod</th><th>Datum sniženja</th><th>Datum isteka</th></tr>';
+    disc.forEach(i => { html += '<tr><td style="font-family:monospace">' + i.barcode + '</td><td>' + fmt(i.discountDate) + '</td><td>' + fmt(i.expiryDate) + '</td></tr>'; });
     html += '</table>';
   }
-
-  html += '<p style="color:#A88060;font-size:12px;margin-top:20px">Aman maloprodaja — Knjiga Rokova — automatski izvještaj</p></div>';
-  GmailApp.sendEmail(store.email, subject, '', { htmlBody: html });
+  html += '<p style="color:#A88060;font-size:11px;margin-top:16px">Aman maloprodaja — Knjiga Rokova</p></div>';
+  GmailApp.sendEmail(store.email, subj, '', { htmlBody: html });
 }
 
-// ================================================
-// POKRENITE OVU FUNKCIJU JEDNOM da podesite trigger
-// ================================================
 function createTrigger() {
-  // Briše stare triggere
   ScriptApp.getProjectTriggers().forEach(t => ScriptApp.deleteTrigger(t));
-  // Kreira novi: svaki dan u 6:00
-  ScriptApp.newTrigger('sendDailyReports')
-    .timeBased()
-    .atHour(6)
-    .everyDays(1)
-    .create();
-  Logger.log('Trigger uspješno kreiran — izvještaji će se slati svaki dan u 6:00');
-}`;
-}
+  ScriptApp.newTrigger('sendDailyReports').timeBased().atHour(6).everyDays(1).create();
+  Logger.log('Trigger kreiran!');
+}`;}
 
-/* ============================================================
-   PAGE NAVIGATION
-   ============================================================ */
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+/* ===== PAGE NAV ===== */
+function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
+document.querySelectorAll('.overlay[id]').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target!==ov||ov.id==='cam-overlay')return;ov.classList.remove('open');});});
+window.addEventListener('online',()=>setSS(true));window.addEventListener('offline',()=>setSS(false));
 
-/* ============================================================
-   MODAL CLICK-OUTSIDE
-   ============================================================ */
-document.querySelectorAll('.overlay[id]').forEach(ov => {
-  ov.addEventListener('click', e => {
-    if (e.target!==ov) return;
-    if (ov.id==='cam-overlay') return;
-    ov.classList.remove('open');
-  });
-});
-
-/* ============================================================
-   INIT
-   ============================================================ */
-(function init() {
+/* ===== INIT ===== */
+(async()=>{
   // Theme
-  const theme = localStorage.getItem('knjiga-theme')||'light';
+  const theme=localStorage.getItem('knjiga-theme')||'light';
   document.documentElement.setAttribute('data-theme',theme);
   document.querySelectorAll('[onclick*="toggleTheme"]').forEach(b=>b.textContent=theme==='dark'?'☀️':'🌙');
 
-  // Firebase REST API init
-  initFirebase();
+  // STEP 1: Load from localStorage cache instantly
+  const hasCached = CDB.loadCache();
 
-  // Monitor online/offline
-  window.addEventListener('online',  () => { fbReady=true;  setSyncStatus(true);  });
-  window.addEventListener('offline', () => { fbReady=false; setSyncStatus(false); });
-
-  // Restore session
-  if (Auth.restore()) {
-    if (session.isAdmin) { showPage('page-admin'); Admin.load(); }
-    else { startStoreApp(); }
+  if(hasCached){
+    // Show app immediately from cache, sync Firebase in background
+    _resumeSession();
+    // Background sync (silent, no spinner)
+    CDB.load().catch(()=>{});
     return;
   }
 
-  // Show login
-  showPage('page-login');
+  // STEP 2: No cache — must fetch from Firebase (first run)
+  setMsg('Prvo pokretanje — učitavam...');
+  try{
+    await Promise.race([
+      CDB.load(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),12000))
+    ]);
+  }catch(e){
+    setMsg('Greška veze. Provjerite internet i osvježite stranicu.');
+    return;
+  }
+  _resumeSession();
 })();
+
+function _resumeSession(){
+  if(Auth.restore()){
+    if(session.type==='super'){showPage('page-super');SuperAdmin.load();}
+    else if(session.type==='terrain'){const t=terrains.find(x=>x.id===session.tid);if(t){document.getElementById('ta-name').textContent=t.name;showPage('page-terrain');TerrainAdmin.load();}else showPage('page-login');}
+    else if(session.type==='store'){const s=stores.find(x=>x.id===session.sid);if(s){const t=terrains.find(x=>x.id===s.terrainId);session.sname=s.name;session.tname=t?.name||'';startApp();}else showPage('page-login');}
+  } else {
+    showPage('page-login');
+  }
+}
 </script>
 </body>
 </html>
