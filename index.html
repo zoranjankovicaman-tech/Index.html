@@ -318,8 +318,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="hactions">
     <button class="hbtn" onclick="CfgMgr.open()">⚙️ <span>Podešavanja</span></button>
     <button class="hbtn" onclick="SuperAdmin.refresh()">🔄 <span>Osvježi</span></button>
+    <button class="hbtn" id="sa-undo-btn" onclick="Undo.prompt()" style="display:none;background:var(--danger-bg);border-color:var(--danger);color:var(--danger)">↩️ <span>Poništi</span></button>
     <button class="hbtn" onclick="UI.openAdminExport()">📊 <span>Izvoz</span></button>
     <button class="hbtn" onclick="UI.openEmailScript()">📧 <span>Email</span></button>
+    <button class="hbtn" onclick="UI.openFullBackup()">🗄️ <span>Backup</span></button>
     <button class="hbtn ico" onclick="UI.toggleTheme()">🌙</button>
     <button class="hbtn ico" onclick="Auth.logout()">🚪</button>
   </div>
@@ -570,7 +572,8 @@ const CDB={
   async updTerrain(id,patch){await FBR.patch(`terrains/${id}`,patch);await this.load();this.saveCache();},
   async delTerrain(id){
     if(stores.some(s=>s.terrainId===id)){toast('Premjestite objekte prije brisanja terena!','err');return false;}
-    await FBR.del(`terrains/${id}`);await this.load();return true;
+    const t=terrains.find(x=>x.id===id);Undo.save('Teren "'+( t?.name||id)+'" obrisan');
+    await FBR.del(`terrains/${id}`);await this.load();this.saveCache();return true;
   },
   async addStore(name,email,pin,terrainId){
     const id='s-'+uid();
@@ -579,9 +582,9 @@ const CDB={
   },
   async updStore(id,patch){await FBR.patch(`storeConfig/${id}`,patch);await this.load();this.saveCache();},
   async delStore(id){
-    if(!confirm('Obrisati objekat i sve stavke? Nepovratno!'))return false;
+    const s=stores.find(x=>x.id===id);Undo.save('Objekat "'+(s?.name||id)+'" obrisan');
     await Promise.all([FBR.del(`storeConfig/${id}`),FBR.del(`stores/${id}/items`)]);
-    await this.load();return true;
+    await this.load();this.saveCache();return true;
   }
 };
 
@@ -828,11 +831,11 @@ const CfgMgr={
   },
   addTerrain(){this._et='t';this._eid=null;document.getElementById('cfe-title').textContent='➕ Novi teren';document.getElementById('cfe-form').innerHTML=`<div class="frow"><label class="flbl">Naziv</label><input type="text" id="cfe-n" placeholder="npr. Teren 2"></div><div class="frow"><label class="flbl">Admin PIN (brojevi)</label><input type="text" id="cfe-p" inputmode="numeric" maxlength="8"></div>`;document.getElementById('cfg-edit-overlay').classList.add('open');},
   editT(id){this._et='t';this._eid=id;const t=terrains.find(x=>x.id===id);if(!t)return;document.getElementById('cfe-title').textContent='✏️ Uredi teren';document.getElementById('cfe-form').innerHTML=`<div class="frow"><label class="flbl">Naziv</label><input type="text" id="cfe-n" value="${esc(t.name)}"></div><div class="frow"><label class="flbl">Admin PIN</label><input type="text" id="cfe-p" value="${esc(t.pin)}" inputmode="numeric" maxlength="8"></div>`;document.getElementById('cfg-edit-overlay').classList.add('open');},
-  async delT(id){const t=terrains.find(x=>x.id===id);if(!confirm(`Obrisati teren "${t?.name}"?`))return;const ok=await CDB.delTerrain(id);if(ok){this.renderTerrains();toast('Teren obrisan','ok');}},
+  delT(id){const t=terrains.find(x=>x.id===id);if(!t)return;ConfirmDel.show('Teren',t.name,async()=>{const ok=await CDB.delTerrain(id);if(ok)this.renderTerrains();});},
   addStore(){this._et='s';this._eid=null;document.getElementById('cfe-title').textContent='➕ Novi objekat';document.getElementById('cfe-form').innerHTML=this._sForm(null);document.getElementById('cfg-edit-overlay').classList.add('open');},
   editS(id){this._et='s';this._eid=id;const s=stores.find(x=>x.id===id);if(!s)return;document.getElementById('cfe-title').textContent='✏️ Uredi objekat';document.getElementById('cfe-form').innerHTML=this._sForm(s);document.getElementById('cfg-edit-overlay').classList.add('open');},
   _sForm(s){const opts=terrains.map(t=>`<option value="${t.id}"${s?.terrainId===t.id?' selected':''}>${esc(t.name)}</option>`).join('');return`<div class="frow"><label class="flbl">Naziv</label><input type="text" id="cfe-n" value="${esc(s?.name||'')}"></div><div class="frow"><label class="flbl">Email</label><input type="email" id="cfe-e" value="${esc(s?.email||'')}"></div><div class="frow"><label class="flbl">PIN</label><input type="text" id="cfe-p" value="${esc(s?.pin||'')}" inputmode="numeric" maxlength="8"></div><div class="frow"><label class="flbl">Teren</label><select id="cfe-t">${opts}</select></div>`;},
-  async delS(id){const ok=await CDB.delStore(id);if(ok){this.renderStores();toast('Objekat obrisan','ok');}},
+  delS(id){const s=stores.find(x=>x.id===id);if(!s)return;ConfirmDel.show('Objekat',s.name,async()=>{const ok=await CDB.delStore(id);if(ok)this.renderStores();});},
   async saveEdit(){
     const name=document.getElementById('cfe-n')?.value.trim();const pin=document.getElementById('cfe-p')?.value.trim();
     if(!name||!pin){toast('Popunite polja!','err');return;}
@@ -890,6 +893,123 @@ function xlsxWrite(h,rows,fn){
   XLSX.utils.book_append_sheet(wb,ws,'Rokovi');XLSX.writeFile(wb,fn);
 }
 
+/* ===== UNDO SYSTEM (permanent) ===== */
+const Undo={
+  _snap:null,
+  save(label){
+    this._snap={terrains:JSON.parse(JSON.stringify(terrains)),stores:JSON.parse(JSON.stringify(stores)),label,ts:Date.now()};
+    localStorage.setItem('knjiga-undo',JSON.stringify(this._snap));
+    const btn=document.getElementById('sa-undo-btn');
+    if(btn){btn.style.display='flex';btn.title='Poništi: '+label;}
+  },
+  prompt(){
+    if(!this._snap){toast('Nema akcije za poništavanje','err');return;}
+    document.getElementById('undo-what').textContent=this._snap.label;
+    document.getElementById('undo-overlay').classList.add('open');
+  },
+  async restore(){
+    if(!this._snap){UI.cl('undo-overlay');return;}
+    UI.cl('undo-overlay');toast('Vraćam podatke...');
+    const tObj={};this._snap.terrains.forEach(t=>{const{id,...r}=t;tObj[id]=r;});
+    const sObj={};this._snap.stores.forEach(s=>{const{id,...r}=s;sObj[id]=r;});
+    await Promise.all([FBR.set('terrains',tObj),FBR.set('storeConfig',sObj)]);
+    await CDB.load();CDB.saveCache();
+    this._snap=null;localStorage.removeItem('knjiga-undo');
+    const btn=document.getElementById('sa-undo-btn');if(btn)btn.style.display='none';
+    if(session?.type==='super')SuperAdmin.load();
+    toast('✓ Podaci vraćeni unazad','ok');
+  },
+  loadFromStorage(){
+    try{const s=JSON.parse(localStorage.getItem('knjiga-undo')||'null');if(s&&s.terrains){this._snap=s;const btn=document.getElementById('sa-undo-btn');if(btn)btn.style.display='flex';}}catch{}
+  }
+};
+
+/* ===== CONFIRM DELETE (2 koraka) ===== */
+const ConfirmDel={
+  _fn:null,_type:'',_name:'',
+  show(type,name,fn){
+    this._fn=fn;this._type=type;this._name=name;
+    document.getElementById('conf-name1').textContent=type+' "'+name+'"';
+    document.getElementById('conf-s1').classList.remove('hidden');
+    document.getElementById('conf-s2').classList.add('hidden');
+    document.getElementById('conf-overlay').classList.add('open');
+  },
+  step2(){
+    document.getElementById('conf-name2').textContent=this._type+' "'+this._name+'"';
+    document.getElementById('conf-s1').classList.add('hidden');
+    document.getElementById('conf-s2').classList.remove('hidden');
+  },
+  async execute(){UI.cl('conf-overlay');if(this._fn)await this._fn();this._fn=null;}
+};
+
+/* ===== FULL BACKUP ===== */
+const FullBackup={
+  async exportJSON(){
+    toast('Učitavam sve podatke...');
+    try{
+      const[td,sd,stData]=await Promise.all([FBR.get('terrains'),FBR.get('storeConfig'),FBR.get('stores')]);
+      const bak={version:2,exportDate:new Date().toISOString(),terrains:td||{},storeConfig:sd||{},stores:stData||{}};
+      const blob=new Blob([JSON.stringify(bak,null,2)],{type:'application/json'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+      a.download='knjiga_rokova_FULL_'+today()+'.json';a.click();
+      toast('✓ Kompletan backup preuzet','ok');
+    }catch(e){toast('Greška pri backup-u!','err');console.error(e);}
+  },
+  async exportExcel(){
+    toast('Učitavam sve podatke...');
+    try{
+      const sd=await FBR.get('storeConfig');
+      if(!sd){toast('Nema podataka!','err');return;}
+      const allS=Object.entries(sd).map(([id,v])=>({id,...v}));
+      const rows=[];
+      for(const s of allS){
+        const its=await DB.fetch(s.id);
+        const tName=terrains.find(t=>t.id===s.terrainId)?.name||'';
+        its.forEach(i=>rows.push([tName,s.name,i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtD(i.discountDate):'',i.discountDays||'']));
+      }
+      if(!rows.length){toast('Nema stavki!','err');return;}
+      xlsxWrite(['Teren','Prodavnica','Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'],rows,'knjiga_rokova_SVE_'+today()+'.xlsx');
+      toast('✓ Izvezeno '+rows.length+' stavki iz '+allS.length+' prodavnica','ok');
+    }catch(e){toast('Greška!','err');console.error(e);}
+  },
+  trigImport(){document.getElementById('full-imp-file').click();},
+  async importJSON(event){
+    const file=event.target.files[0];if(!file)return;
+    const reader=new FileReader();
+    reader.onload=async e=>{
+      try{
+        const bak=JSON.parse(e.target.result);
+        if(!bak.terrains&&!bak.storeConfig){toast('Neispravan backup fajl!','err');return;}
+        const tAll=Object.keys(bak.terrains||{}).length;
+        const sAll=Object.keys(bak.storeConfig||{}).length;
+        const iAll=Object.values(bak.stores||{}).reduce((a,s)=>a+Object.keys(s.items||{}).length,0);
+        if(!confirm('Osvjeziti bazu iz backupa? Backup sadrzi: '+tAll+' terena, '+sAll+' objekata, '+iAll+' stavki. Dodaju se samo NOVI zapisi. Postojeci i novouneti podaci se ZADRZAVAJU.'))return;
+        toast('Osvježavam bazu...');
+        const existTids=new Set(terrains.map(t=>t.id));
+        const existSids=new Set(stores.map(s=>s.id));
+        const newT={},newS={};let addedT=0,addedS=0,addedI=0;
+        for(const[id,data]of Object.entries(bak.terrains||{})){if(!existTids.has(id)){newT[id]=data;addedT++;}}
+        for(const[id,data]of Object.entries(bak.storeConfig||{})){if(!existSids.has(id)){newS[id]=data;addedS++;}}
+        for(const[sid,sdata]of Object.entries(bak.stores||{})){
+          const existing=await DB.fetch(sid);const existIds=new Set(existing.map(i=>i.id));
+          const newItems={};
+          for(const[iid,idata]of Object.entries(sdata.items||{})){if(!existIds.has(iid)){newItems[iid]=idata;addedI++;}}
+          if(Object.keys(newItems).length>0)await FBR.patch('stores/'+sid+'/items',newItems);
+        }
+        const ops=[];
+        if(addedT>0)ops.push(FBR.patch('terrains',newT));
+        if(addedS>0)ops.push(FBR.patch('storeConfig',newS));
+        await Promise.all(ops);
+        await CDB.load();CDB.saveCache();
+        UI.cl('full-bak-overlay');
+        if(session?.type==='super')SuperAdmin.load();
+        toast('✓ Osvježeno: +'+addedT+' terena, +'+addedS+' objekata, +'+addedI+' stavki','ok');
+      }catch(ex){toast('Greška pri uvozu!','err');console.error(ex);}
+    };
+    reader.readAsText(file);event.target.value='';
+  }
+};
+
 /* ===== UI ===== */
 const UI={
   toggleTheme(){const n=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',n);localStorage.setItem('knjiga-theme',n);document.querySelectorAll('[onclick*="toggleTheme"]').forEach(b=>b.textContent=n==='dark'?'☀️':'🌙');},
@@ -907,6 +1027,7 @@ const UI={
   },
   openEmailScript(){document.getElementById('email-block').textContent=emailScript();document.getElementById('email-overlay').classList.add('open');},
   copyScript(){navigator.clipboard.writeText(emailScript()).then(()=>toast('✓ Kopirano!','ok')).catch(()=>toast('Kopirajte ručno','err'));},
+  openFullBackup(){document.getElementById('full-bak-overlay').classList.add('open');},
   cl(id){document.getElementById(id).classList.remove('open');}
 };
 
@@ -1015,6 +1136,7 @@ window.addEventListener('online',()=>setSS(true));window.addEventListener('offli
 })();
 
 function _resumeSession(){
+  Undo.loadFromStorage();
   if(Auth.restore()){
     if(session.type==='super'){showPage('page-super');SuperAdmin.load();}
     else if(session.type==='terrain'){const t=terrains.find(x=>x.id===session.tid);if(t){document.getElementById('ta-name').textContent=t.name;showPage('page-terrain');TerrainAdmin.load();}else showPage('page-login');}
@@ -1024,5 +1146,58 @@ function _resumeSession(){
   }
 }
 </script>
+
+<!-- FULL BACKUP OVERLAY -->
+<div class="overlay" id="full-bak-overlay">
+<div class="modal modal-wide">
+  <div class="modal-title">🗄️ Kompletan Backup &amp; Restore</div>
+  <p style="font-size:.78rem;color:var(--text2);margin-bottom:12px">Backup obuhvata <strong>sve terene, sve objekte i sve unesene stavke</strong> svih prodavnica.</p>
+  <div class="exp-opts">
+    <div class="exp-opt" onclick="FullBackup.exportJSON()"><div class="exp-opt-t">📄 Izvoz JSON — kompletna baza</div><div class="exp-opt-d">Tereni + objekti + sve stavke svih prodavnica</div></div>
+    <div class="exp-opt" onclick="FullBackup.exportExcel()"><div class="exp-opt-t">📊 Izvoz Excel — sve prodavnice</div><div class="exp-opt-d">Jedan fajl, sve prodavnice, sve stavke</div></div>
+    <div class="exp-opt" onclick="FullBackup.trigImport()"><div class="exp-opt-t">📤 Uvoz JSON — merge bez dupliranja</div><div class="exp-opt-d">Dodaju se samo novi zapisi. Postojeći podaci se zadržavaju.</div></div>
+  </div>
+  <input type="file" id="full-imp-file" accept=".json" style="display:none" onchange="FullBackup.importJSON(event)">
+  <hr class="divider">
+  <div style="font-size:.74rem;color:var(--text3);margin-bottom:10px">💡 Preporuka: radite JSON backup jednom sedmično i čuvajte na računaru ili Google Drive-u.</div>
+  <button class="btn btn-ghost btn-full" onclick="UI.cl('full-bak-overlay')">Zatvori</button>
+</div>
+</div>
+
+<!-- CONFIRM DELETE - 2 koraka -->
+<div class="overlay" id="conf-overlay" style="z-index:700">
+<div class="modal">
+  <div class="modal-title" style="color:var(--danger)">🗑️ Potvrda brisanja</div>
+  <div id="conf-s1">
+    <p style="margin-bottom:14px;line-height:1.6">Da li ste sigurni da želite da obrišete <strong id="conf-name1"></strong>?</p>
+    <div class="btn-row">
+      <button class="btn" style="flex:1;background:var(--warn);color:#fff" onclick="ConfirmDel.step2()">Da, nastavi →</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="UI.cl('conf-overlay')">Otkaži</button>
+    </div>
+  </div>
+  <div id="conf-s2" class="hidden">
+    <p style="margin-bottom:8px;line-height:1.6">Brisanjem ćete trajno ukloniti <strong id="conf-name2"></strong>.</p>
+    <p style="font-size:.78rem;color:var(--danger);margin-bottom:14px">Koristite <strong>↩️ Poništi</strong> u headeru ako se predomislite.</p>
+    <div class="btn-row">
+      <button class="btn btn-danger" style="flex:1" onclick="ConfirmDel.execute()">✓ Da, obriši trajno</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="UI.cl('conf-overlay')">Otkaži</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- UNDO POTVRDA -->
+<div class="overlay" id="undo-overlay" style="z-index:700">
+<div class="modal">
+  <div class="modal-title">↩️ Poništi akciju</div>
+  <p style="margin-bottom:8px;line-height:1.6">Da li želite da se vratite korak unazad?</p>
+  <p id="undo-what" style="font-size:.85rem;font-weight:700;color:var(--danger);margin-bottom:10px"></p>
+  <p style="font-size:.74rem;color:var(--text3);margin-bottom:14px">Vraćaju se konfiguracija terena i objekata. Stavke artikala ostaju nepromijenjene.</p>
+  <div class="btn-row">
+    <button class="btn btn-primary" style="flex:1" onclick="Undo.restore()">↩️ Da, vrati unazad</button>
+    <button class="btn btn-ghost" style="flex:1" onclick="UI.cl('undo-overlay')">Ne, zadrži</button>
+  </div>
+</div>
+</div>
 </body>
 </html>
