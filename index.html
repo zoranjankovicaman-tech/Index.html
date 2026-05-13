@@ -295,7 +295,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="stats">
     <div class="stat-box"><div class="stat-n" id="sn-total">0</div><div class="stat-lbl">Ukupno</div></div>
     <div class="stat-box"><div class="stat-n" id="sn-disc" style="color:var(--warn)">0</div><div class="stat-lbl">Sa snižnjem</div></div>
-    <div class="stat-box"><div class="stat-n" id="sn-today" style="color:var(--danger)">0</div><div class="stat-lbl">Iste danas</div></div>
+    <div class="stat-box"><div class="stat-n" id="sn-today" style="color:var(--danger)">0</div><div class="stat-lbl">Ističe danas</div></div>
   </div>
   <div class="card">
     <div class="card-hdr">📦 Unesene stavke</div>
@@ -303,7 +303,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="filter-row">
       <button class="fbtn on" onclick="List.filter('all',this)">Sve</button>
       <button class="fbtn" onclick="List.filter('discount',this)">Sniženje</button>
-      <button class="fbtn" onclick="List.filter('today',this)">Iste danas</button>
+      <button class="fbtn" onclick="List.filter('today',this)">Ističe danas</button>
       <button class="fbtn" onclick="List.filter('expired',this)">Isteklo</button>
     </div>
     <div class="list-wrap" id="items-list"></div>
@@ -317,7 +317,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="hbrand"><div class="hico">🔐</div><div><div class="htitle">SUPER ADMIN</div><div class="hsub">Aman — Knjiga Rokova</div></div></div>
   <div class="hactions">
     <button class="hbtn" onclick="CfgMgr.open()">⚙️ <span>Podešavanja</span></button>
-    <button class="hbtn" onclick="SuperAdmin.refresh()">🔄 <span>Osvježi</span></button>
+    <button class="hbtn" onclick="SuperAdmin.refresh()">🔄 <span>Osveži</span></button>
     <button class="hbtn" id="sa-undo-btn" onclick="Undo.prompt()" style="display:none;background:var(--danger-bg);border-color:var(--danger);color:var(--danger)">↩️ <span>Poništi</span></button>
     <button class="hbtn" onclick="UI.openAdminExport()">📊 <span>Izvoz</span></button>
     <button class="hbtn" onclick="UI.openEmailScript()">📧 <span>Email</span></button>
@@ -331,7 +331,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="stat-box"><div class="stat-n" id="sa-trn">0</div><div class="stat-lbl">Terena</div></div>
     <div class="stat-box"><div class="stat-n" id="sa-str">0</div><div class="stat-lbl">Objekata</div></div>
     <div class="stat-box"><div class="stat-n" id="sa-tot" style="color:var(--accent)">0</div><div class="stat-lbl">Ukupno stavki</div></div>
-    <div class="stat-box"><div class="stat-n" id="sa-tod" style="color:var(--danger)">0</div><div class="stat-lbl">Iste danas</div></div>
+    <div class="stat-box"><div class="stat-n" id="sa-tod" style="color:var(--danger)">0</div><div class="stat-lbl">Ističe danas</div></div>
   </div>
   <div class="card">
     <div class="card-hdr">🏔️ Pregled po terenima</div>
@@ -345,7 +345,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <header>
   <div class="hbrand"><div class="hico">🏔️</div><div><div class="htitle" id="ta-name">Teren</div><div class="hsub">Knjiga Rokova</div></div></div>
   <div class="hactions">
-    <button class="hbtn" onclick="TerrainAdmin.refresh()">🔄 <span>Osvježi</span></button>
+    <button class="hbtn" onclick="TerrainAdmin.refresh()">🔄 <span>Osveži</span></button>
     <button class="hbtn" onclick="UI.openTerrainExport()">📊 <span>Izvoz</span></button>
     <button class="hbtn ico" onclick="UI.toggleTheme()">🌙</button>
     <button class="hbtn ico" onclick="Auth.logout()">🚪</button>
@@ -355,7 +355,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="stats4">
     <div class="stat-box"><div class="stat-n" id="ta-str">0</div><div class="stat-lbl">Objekata</div></div>
     <div class="stat-box"><div class="stat-n" id="ta-tot" style="color:var(--accent)">0</div><div class="stat-lbl">Ukupno stavki</div></div>
-    <div class="stat-box"><div class="stat-n" id="ta-tod" style="color:var(--danger)">0</div><div class="stat-lbl">Iste danas</div></div>
+    <div class="stat-box"><div class="stat-n" id="ta-tod" style="color:var(--danger)">0</div><div class="stat-lbl">Ističe danas</div></div>
     <div class="stat-box"><div class="stat-n" id="ta-disc" style="color:var(--warn)">0</div><div class="stat-lbl">Sa snižnjem</div></div>
   </div>
   <div class="card">
@@ -480,10 +480,50 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <!-- Email Script -->
 <div class="overlay" id="email-overlay">
 <div class="modal modal-wide">
-  <div class="modal-title">📧 Email skripta — Google Apps Script</div>
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button class="tab-btn on" id="tab-email-script" onclick="UI.emailTab('script')">📧 Email skripta</button>
+    <button class="tab-btn" id="tab-firebase-rules" onclick="UI.emailTab('rules')">🔒 Firebase pravila</button>
+  </div>
+  <div id="email-tab-script">
+  <div class="modal-title" style="margin-bottom:8px">📧 Email skripta — Google Apps Script</div>
   <p style="font-size:.78rem;color:var(--text2);margin-bottom:9px">Dinamički čita sve objekte iz Firebase — novi objekti se automatski uključuju.</p>
   <button class="btn btn-ghost btn-full" style="margin-bottom:9px" onclick="UI.copyScript()">📋 Kopiraj kod</button>
   <div class="code-block" id="email-block"></div>
+  </div>
+  <div id="email-tab-rules" class="hidden">
+  <div class="modal-title" style="margin-bottom:8px">🔒 Firebase Security Rules</div>
+  <p style="font-size:.78rem;color:var(--text2);margin-bottom:10px">Postavite ova pravila u Firebase Console → Realtime Database → Rules. Štite strukturu podataka od neispravnih upisa.</p>
+  <button class="btn btn-ghost btn-full" style="margin-bottom:9px" onclick="UI.copyRules()">📋 Kopiraj pravila</button>
+  <div class="code-block" id="rules-block">{
+  "rules": {
+    "terrains": {
+      ".read": true,
+      "$id": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['name','pin','order'])"
+      }
+    },
+    "storeConfig": {
+      ".read": true,
+      "$id": {
+        ".write": true,
+        ".validate": "newData.hasChildren(['name','email','pin','terrainId'])"
+      }
+    },
+    "stores": {
+      ".read": true,
+      "$storeId": {
+        "items": {
+          "$itemId": {
+            ".write": true,
+            ".validate": "newData.hasChildren(['barcode','expiryDate'])"
+          }
+        }
+      }
+    }
+  }
+}</div>
+  </div>
   <button class="btn btn-ghost btn-full mt8" onclick="UI.cl('email-overlay')">Zatvori</button>
 </div>
 </div>
@@ -493,7 +533,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <script>
 /* ===== CONFIG ===== */
 const FB='https://knjiga-rokova-aman-default-rtdb.europe-west1.firebasedatabase.app';
-const SA_PIN='2024';
+const SA_PIN='22121963'; // 8-cifreni admin PIN
 const SEED=[
   {id:'aman-178',name:'Aman 178',email:'aman178@aman.co.rs',pin:'178'},
   {id:'aman-225',name:'Aman 225',email:'aman225@aman.co.rs',pin:'225'},
@@ -512,10 +552,13 @@ let session=null,terrains=[],stores=[],items=[],adminData={},fbSub=null;
 
 /* ===== UTILS ===== */
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
-const today=()=>new Date().toISOString().split('T')[0];
-const tomorrow=()=>{const d=new Date();d.setDate(d.getDate()+1);return d.toISOString().split('T')[0];};
+// Lokalni datum (ne UTC) — ispravno za prikaz korisnicima
+const today=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');};
+// Sutrašnji lokalni datum
+const tomorrow=()=>{const n=new Date();n.setDate(n.getDate()+1);return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');};
 const fmtD=s=>{if(!s)return'';const[y,m,d]=s.split('-');return`${d}.${m}.${y}.`;};
-const subDays=(ds,n)=>{const d=new Date(ds);d.setDate(d.getDate()-n);return d.toISOString().split('T')[0];};
+// UTC-safe subDays — sprecava timezone greske blizu ponoci
+const subDays=(ds,n)=>{const[y,m,d]=ds.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-n);return dt.toISOString().split('T')[0];};
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 const setMsg=t=>{const e=document.getElementById('load-msg');if(e)e.textContent=t;};
 function toast(msg,type=''){
@@ -571,7 +614,7 @@ const CDB={
   },
   async updTerrain(id,patch){await FBR.patch(`terrains/${id}`,patch);await this.load();this.saveCache();},
   async delTerrain(id){
-    if(stores.some(s=>s.terrainId===id)){toast('Premjestite objekte prije brisanja terena!','err');return false;}
+    if(stores.some(s=>s.terrainId===id)){toast('Premestite objekte prije brisanja terena!','err');return false;}
     const t=terrains.find(x=>x.id===id);Undo.save('Teren "'+( t?.name||id)+'" obrisan');
     await FBR.del(`terrains/${id}`);await this.load();this.saveCache();return true;
   },
@@ -641,6 +684,36 @@ function startApp(){
   setTimeout(()=>document.getElementById('bc-input').focus(),200);
 }
 
+
+/* ===== RATE LIMITING — Zastita od bruteforce ===== */
+const RateLimit={
+  _k:'knjiga-rl',
+  check(){
+    try{
+      const d=JSON.parse(localStorage.getItem(this._k)||'{}');
+      const now=Date.now();
+      if(d.lockUntil&&now<d.lockUntil){
+        const mins=Math.ceil((d.lockUntil-now)/60000);
+        return{locked:true,mins};
+      }
+      return{locked:false,attempts:d.attempts||0};
+    }catch{return{locked:false,attempts:0};}
+  },
+  fail(){
+    const st=this.check();
+    const att=(st.attempts||0)+1;
+    if(att>=5){
+      const lockUntil=Date.now()+5*60*1000;
+      localStorage.setItem(this._k,JSON.stringify({attempts:0,lockUntil}));
+      return{locked:true,mins:5};
+    }
+    localStorage.setItem(this._k,JSON.stringify({attempts:att}));
+    return{locked:false,remaining:5-att};
+  },
+  success(){localStorage.removeItem(this._k);},
+  reset(){localStorage.removeItem(this._k);}
+};
+
 /* ===== LOGIN ===== */
 const Login={
   _r:'',_tid:'',_sid:'',_pin:'',
@@ -681,7 +754,25 @@ const Login={
   _expLen(){if(this._r==='super')return SA_PIN.length;if(this._r==='terrain')return terrains.find(x=>x.id===this._tid)?.pin.length||4;if(this._r==='store')return stores.find(x=>x.id===this._sid)?.pin.length||3;return 4;},
   key(k){const m=this._expLen();if(this._pin.length>=m)return;this._pin+=k;this._updDots();document.getElementById('login-err').textContent='';document.getElementById('login-btn').style.display='block';if(this._pin.length===m)setTimeout(()=>this.attempt(),180);},
   del(){this._pin=this._pin.slice(0,-1);this._updDots();document.getElementById('login-err').textContent='';document.getElementById('login-btn').style.display=this._pin.length>0?'block':'none';},
-  attempt(){if(!this._r||!this._pin)return;const ok=Auth.login(this._r,this._tid,this._sid,this._pin);if(!ok){document.getElementById('login-err').textContent='✗ Pogrešan PIN — pokušajte ponovo';this._pin='';this._updDots();document.getElementById('login-btn').style.display='none';}},
+  attempt(){
+    if(!this._r||!this._pin)return;
+    const rl=RateLimit.check();
+    if(rl.locked){
+      document.getElementById('login-err').textContent='🔒 Previše pokušaja — sačekajte '+rl.mins+' min';
+      this._pin='';this._updDots();document.getElementById('login-btn').style.display='none';
+      return;
+    }
+    const ok=Auth.login(this._r,this._tid,this._sid,this._pin);
+    if(!ok){
+      const rl2=RateLimit.fail();
+      if(rl2.locked){
+        document.getElementById('login-err').textContent='🔒 5 pogrešnih pokušaja — sačekajte 5 minuta';
+      }else{
+        document.getElementById('login-err').textContent='✗ Pogrešan PIN (još '+rl2.remaining+' pokušaja)';
+      }
+      this._pin='';this._updDots();document.getElementById('login-btn').style.display='none';
+    }else{RateLimit.success();}
+  },
   _updDots(){const n=this._expLen();for(let i=0;i<n;i++){const d=document.getElementById('pd'+i);if(d)d.className='dot'+(i<this._pin.length?' filled':'');}},
   reset(){this._r='';this._pin='';this._tid='';this._sid='';['super','terrain','store'].forEach(x=>{document.getElementById('rb-'+x).classList.remove('sel');document.getElementById('rc-'+x).textContent='';});document.getElementById('lr-terrain').classList.add('hidden');document.getElementById('lr-store').classList.add('hidden');document.getElementById('pin-section').classList.add('hidden');document.getElementById('login-btn').style.display='none';document.getElementById('login-err').textContent='';const c=document.getElementById('pin-dots');if(c)c.innerHTML='';}
 };
@@ -694,10 +785,30 @@ const Steps={
   confirmDate(){const v=document.getElementById('exp-date').value;if(!v){toast('Izaberite datum!','err');return;}cDate=v;['chip-dt','chip-dt2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fmtD(v);});this.go(3);},
   setDiscount(h){if(!h){this._save(false,null);}else{document.getElementById('disc-days').value='';this.go(4);}},
   confirmDays(){const d=document.getElementById('disc-days').value;if(!d){toast('Izaberite broj dana!','err');return;}this._save(true,parseInt(d));},
-  async _save(hd,dd){
+    async _save(hd,dd){
     const dd2=hd?subDays(cDate,dd):null;
+    // Provera duplikata pre cuvanja
+    const dup=items.find(i=>i.barcode===cBC&&i.expiryDate===cDate);
+    if(dup){
+      if(!window._dupConfirmed){
+        window._dupConfirmed=true;
+        toast('⚠️ Isti barkod i datum vec postoje — pritisnite ponovo za duplikat','err');
+        setTimeout(()=>{window._dupConfirmed=false;},4000);
+        return;
+      }
+      window._dupConfirmed=false;
+    }
     const item={id:uid(),barcode:cBC,expiryDate:cDate,hasDiscount:hd,discountDays:dd,discountDate:dd2,createdAt:new Date().toISOString()};
-    await DB.add(session.sid,item);toast(`✓ Artikal ${cBC} sačuvan!`,'ok');
+    try{
+      await DB.add(session.sid,item);
+      toast('✓ Artikal '+cBC+' sacuvan!','ok');
+    }catch(e){
+      toast('Greška pri čuvanju — proverite vezu i pokušajte ponovo','err');
+      // Ukloni optimisticki dodat item
+      items=items.filter(i=>i.id!==item.id);
+      DB.sl(session.sid,items);List.render();Stats.upd();
+      return;
+    }
     document.getElementById('bc-input').value='';cBC='';cDate='';this.go(1);setTimeout(()=>document.getElementById('bc-input').focus(),100);
   }
 };
@@ -738,7 +849,7 @@ const Edit={
   open(id){this._id=id;const item=items.find(i=>i.id===id);if(!item)return;document.getElementById('ed-bc').value=item.barcode;document.getElementById('ed-date').value=item.expiryDate;document.getElementById('ed-disc').value=item.hasDiscount?'1':'0';document.getElementById('ed-days').value=item.discountDays||'5';this.togDays();document.getElementById('edit-overlay').classList.add('open');},
   togDays(){document.getElementById('ed-drow').classList.toggle('hidden',document.getElementById('ed-disc').value!=='1');},
   async save(){const bc=document.getElementById('ed-bc').value.trim(),ed=document.getElementById('ed-date').value;if(!bc||!ed){toast('Popunite polja!','err');return;}const hd=document.getElementById('ed-disc').value==='1';const dd=hd?parseInt(document.getElementById('ed-days').value):null;await DB.upd(session.sid,this._id,{barcode:bc,expiryDate:ed,hasDiscount:hd,discountDays:dd,discountDate:hd?subDays(ed,dd):null});UI.cl('edit-overlay');toast('✓ Izmjena sačuvana','ok');},
-  async del(){if(!confirm('Obrisati?'))return;await DB.rm(session.sid,this._id);UI.cl('edit-overlay');toast('Obrisano','ok');}
+  async del(){Confirm.show('Obrisati ovaj artikal?',async()=>{await DB.rm(session.sid,this._id);UI.cl('edit-overlay');toast('Artikal obrisan','ok');},'🗑️ Obriši');}
 };
 
 /* ===== EXPORT (store) ===== */
@@ -759,13 +870,40 @@ const Backup={
   json(){const s=stores.find(x=>x.id===session.sid);const b=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`backup_${s?.name||session.sid}_${today()}.json`;a.click();toast('✓ JSON backup','ok');},
   excel(){if(!items.length){toast('Nema podataka!','err');return;}const s=stores.find(x=>x.id===session.sid);xlsxWrite(['Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'],items.map(i=>[i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtD(i.discountDate):'',i.discountDays||'']),`svi_${s?.name||''}_${today()}.xlsx`);toast(`✓ Izvezeno ${items.length}`,'ok');},
   trigImport(){document.getElementById('imp-file').click();},
-  async importJSON(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=async e=>{try{const a=JSON.parse(e.target.result);if(!Array.isArray(a))throw 0;const s=stores.find(x=>x.id===session.sid);if(!confirm(`Uvesti ${a.length} stavki u ${s?.name}?`))return;await DB.replAll(session.sid,a);UI.cl('bak-overlay');toast(`✓ Uvezeno ${a.length}`,'ok');}catch{toast('Greška JSON!','err');}};r.readAsText(f);ev.target.value='';}
+  async importJSON(ev){
+    const f=ev.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=async e=>{
+      try{
+        const a=JSON.parse(e.target.result);
+        if(!Array.isArray(a))throw new Error('invalid');
+        const s=stores.find(x=>x.id===session.sid);
+        Confirm.show(
+          'Uvesti '+a.length+' stavki u '+(s?.name||'objekat')+'?<br>Postojeći podaci biće zamenjeni.',
+          async()=>{
+            await DB.replAll(session.sid,a);
+            UI.cl('bak-overlay');
+            toast('✓ Uvezeno '+a.length+' stavki','ok');
+          },'📥 Uvezi'
+        );
+      }catch(ex){toast('Greška — neispravan JSON fajl!','err');}
+    };
+    r.readAsText(f);ev.target.value='';
+  }
 };
 
 /* ===== SUPER ADMIN ===== */
 const SuperAdmin={
-  async load(){document.getElementById('sa-grid').innerHTML='<div class="empty-state"><div class="spinner"></div></div>';adminData={};await Promise.all(stores.map(async s=>{adminData[s.id]=await DB.fetch(s.id);}));this.render();},
-  async refresh(){toast('Osvježavam...');await CDB.load();await this.load();toast('✓ Osvježeno','ok');},
+  async load(){
+    document.getElementById('sa-grid').innerHTML='<div class="empty-state"><div class="spinner"></div></div>';
+    adminData={};
+    const allData=await FBR.get('stores');
+    stores.forEach(s=>{
+      const raw=allData?.[s.id]?.items;
+      adminData[s.id]=raw?Object.entries(raw).map(([id,v])=>({id,...v})):DB.ll(s.id);
+    });
+    this.render();},
+  async refresh(){toast('Osvežavam...');await CDB.load();await this.load();toast('✓ Osveženo','ok');},
   render(){
     const t=today();let tot=0,tod=0;
     document.getElementById('sa-trn').textContent=terrains.length;document.getElementById('sa-str').textContent=stores.length;
@@ -789,8 +927,16 @@ const SuperAdmin={
 
 /* ===== TERRAIN ADMIN ===== */
 const TerrainAdmin={
-  async load(){const ss=stores.filter(s=>s.terrainId===session.tid);adminData={};await Promise.all(ss.map(async s=>{adminData[s.id]=await DB.fetch(s.id);}));this.render();},
-  async refresh(){toast('Osvježavam...');await this.load();toast('✓ Osvježeno','ok');},
+  async load(){
+    const ss=stores.filter(s=>s.terrainId===session.tid);adminData={};
+    // Batch fetch — ceo /stores node, filtriraj lokalno
+    const allData=await FBR.get('stores');
+    ss.forEach(s=>{
+      const raw=allData?.[s.id]?.items;
+      adminData[s.id]=raw?Object.entries(raw).map(([id,v])=>({id,...v})):DB.ll(s.id);
+    });
+    this.render();},
+  async refresh(){toast('Osvežavam...');await this.load();toast('✓ Osveženo','ok');},
   render(){
     const t=today();const ss=stores.filter(s=>s.terrainId===session.tid);let tot=0,todN=0,discN=0;
     const cards=ss.map(s=>{const si=adminData[s.id]||[];const tod=si.filter(i=>i.expiryDate===t).length;const exp=si.filter(i=>i.expiryDate<t).length;tot+=si.length;todN+=tod;discN+=si.filter(i=>i.hasDiscount).length;
@@ -893,6 +1039,25 @@ function xlsxWrite(h,rows,fn){
   XLSX.utils.book_append_sheet(wb,ws,'Rokovi');XLSX.writeFile(wb,fn);
 }
 
+/* ===== CONFIRM HELPER (zamena za confirm()) ===== */
+const Confirm={
+  show(msg,fn,dangerLabel='Da'){
+    const ov=document.createElement('div');
+    ov.className='overlay open';ov.style.zIndex='800';
+    ov.innerHTML=`<div class="modal" style="max-width:380px">
+      <div class="modal-title">⚠️ Potvrda</div>
+      <p style="margin-bottom:16px;line-height:1.6;font-size:.88rem;color:var(--text2)">${msg}</p>
+      <div class="btn-row">
+        <button class="btn btn-danger" style="flex:1" id="_c_ok">${dangerLabel}</button>
+        <button class="btn btn-ghost" style="flex:1" id="_c_no">Otkaži</button>
+      </div></div>`;
+    ov.querySelector('#_c_no').onclick=()=>ov.remove();
+    ov.querySelector('#_c_ok').onclick=()=>{ov.remove();fn();};
+    ov.onclick=e=>{if(e.target===ov)ov.remove();};
+    document.body.appendChild(ov);
+  }
+};
+
 /* ===== UNDO SYSTEM (permanent) ===== */
 const Undo={
   _snap:null,
@@ -983,8 +1148,17 @@ const FullBackup={
         const tAll=Object.keys(bak.terrains||{}).length;
         const sAll=Object.keys(bak.storeConfig||{}).length;
         const iAll=Object.values(bak.stores||{}).reduce((a,s)=>a+Object.keys(s.items||{}).length,0);
-        if(!confirm('Osvjeziti bazu iz backupa? Backup sadrzi: '+tAll+' terena, '+sAll+' objekata, '+iAll+' stavki. Dodaju se samo NOVI zapisi. Postojeci i novouneti podaci se ZADRZAVAJU.'))return;
-        toast('Osvježavam bazu...');
+        /* confirm -> Confirm.show — async wrapper */
+        await new Promise((resolve,reject)=>{
+          Confirm.show(
+            'Osvežiti bazu iz backupa?<br><br>Backup sadrži: <strong>'+tAll+' terena, '+sAll+' objekata, '+iAll+' stavki</strong><br><br>Dodaju se samo NOVI zapisi. Postojeći podaci se zadržavaju.',
+            resolve,
+            '📥 Uvezi'
+          );
+          // Ako korisnik zatvori modal bez klikа, odbaci
+          setTimeout(()=>reject(new Error('cancelled')),60000);
+        });
+        toast('Osvežavam bazu...');
         const existTids=new Set(terrains.map(t=>t.id));
         const existSids=new Set(stores.map(s=>s.id));
         const newT={},newS={};let addedT=0,addedS=0,addedI=0;
@@ -1003,7 +1177,7 @@ const FullBackup={
         await CDB.load();CDB.saveCache();
         UI.cl('full-bak-overlay');
         if(session?.type==='super')SuperAdmin.load();
-        toast('✓ Osvježeno: +'+addedT+' terena, +'+addedS+' objekata, +'+addedI+' stavki','ok');
+        toast('✓ Osveženo: +'+addedT+' terena, +'+addedS+' objekata, +'+addedI+' stavki','ok');
       }catch(ex){toast('Greška pri uvozu!','err');console.error(ex);}
     };
     reader.readAsText(file);event.target.value='';
@@ -1028,6 +1202,16 @@ const UI={
   openEmailScript(){document.getElementById('email-block').textContent=emailScript();document.getElementById('email-overlay').classList.add('open');},
   copyScript(){navigator.clipboard.writeText(emailScript()).then(()=>toast('✓ Kopirano!','ok')).catch(()=>toast('Kopirajte ručno','err'));},
   openFullBackup(){document.getElementById('full-bak-overlay').classList.add('open');},
+  emailTab(tab){
+    document.getElementById('email-tab-script').classList.toggle('hidden',tab!=='script');
+    document.getElementById('email-tab-rules').classList.toggle('hidden',tab!=='rules');
+    document.getElementById('tab-email-script').classList.toggle('on',tab==='script');
+    document.getElementById('tab-firebase-rules').classList.toggle('on',tab==='rules');
+  },
+  copyRules(){
+    const txt=document.getElementById('rules-block').textContent;
+    navigator.clipboard.writeText(txt).then(()=>toast('✓ Pravila kopirana!','ok')).catch(()=>toast('Kopirajte ručno','err'));
+  },
   cl(id){document.getElementById(id).classList.remove('open');}
 };
 
@@ -1102,6 +1286,22 @@ function createTrigger() {
 function showPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');}
 document.querySelectorAll('.overlay[id]').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target!==ov||ov.id==='cam-overlay')return;ov.classList.remove('open');});});
 window.addEventListener('online',()=>setSS(true));window.addEventListener('offline',()=>setSS(false));
+
+
+/* ===== GLOBAL ERROR HANDLER ===== */
+window.onerror=function(msg,src,line,col,err){
+  console.error('[KnjigaRokova] Greška:',msg,'u',src,'linija',line);
+  // Ne prikazuj toast za benigne greske (npr. ResizeObserver)
+  if(msg&&!msg.includes('ResizeObserver')&&!msg.includes('Script error')){
+    toast('Desila se greška — pokušajte ponovo.','err');
+  }
+  return false;
+};
+window.addEventListener('unhandledrejection',e=>{
+  // Ignoriši otkazane Promise-e (korisnik zatvorio modal itd.)
+  if(e.reason?.message==='cancelled')return;
+  console.error('[KnjigaRokova] Neuhvaćena Promise greška:',e.reason);
+});
 
 /* ===== INIT ===== */
 (async()=>{
