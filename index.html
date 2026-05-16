@@ -567,6 +567,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <div class="overlay" id="edit-overlay">
 <div class="modal">
   <div class="modal-title">✏️ Izmjena stavke</div>
+  <div id="ed-created" style="font-size:.74rem;color:var(--text3);margin-bottom:10px;padding:6px 10px;background:var(--bg2);border-radius:7px;display:none">🕐 Uneto: <strong id="ed-created-val"></strong></div>
   <div class="frow"><label class="flbl">Barkod</label><input type="text" id="ed-bc" inputmode="numeric"></div>
   <div class="frow"><label class="flbl">Datum isteka</label><input type="date" id="ed-date"></div>
   <div class="frow"><label class="flbl">Sniženje</label><select id="ed-disc" onchange="Edit.togDays()"><option value="0">Ne</option><option value="1">Da</option></select></div>
@@ -755,6 +756,18 @@ const today=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth
 // Sutrašnji lokalni datum
 const tomorrow=()=>{const n=new Date();n.setDate(n.getDate()+1);return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');};
 const fmtD=s=>{if(!s)return'';const[y,m,d]=s.split('-');return`${d}.${m}.${y}.`;};
+const fmtDT=s=>{
+  if(!s)return'';
+  try{
+    const d=new Date(s);
+    const dd=String(d.getDate()).padStart(2,'0');
+    const mm=String(d.getMonth()+1).padStart(2,'0');
+    const yy=d.getFullYear();
+    const hh=String(d.getHours()).padStart(2,'0');
+    const mi=String(d.getMinutes()).padStart(2,'0');
+    return`${dd}.${mm}.${yy}. ${hh}:${mi}`;
+  }catch{return'';}
+};
 // UTC-safe subDays — sprecava timezone greske blizu ponoci
 const subDays=(ds,n)=>{const[y,m,d]=ds.split('-').map(Number);const dt=new Date(Date.UTC(y,m-1,d));dt.setUTCDate(dt.getUTCDate()-n);return dt.toISOString().split('T')[0];};
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1105,7 +1118,17 @@ const List={
         bc=bc.replace(rx,'<mark style="background:var(--accent-bg);color:var(--accent)">$1</mark>');}
         catch(e){}
       }
-      return`<div class="${cls}" onclick="Edit.open('${item.id}')"><div class="item-bc">${bc}</div><div class="item-dt">${fmtD(item.expiryDate)}</div>${item.hasDiscount?`<span class="badge badge-d">-${item.discountDays}d</span>`:`<span class="badge badge-n">Bez</span>`}</div>`;
+      const unosT=item.createdAt?`🕐 ${fmtDT(item.createdAt)}`:'';
+      return`<div class="${cls}" onclick="Edit.open('${item.id}')">
+        <div style="flex:1;min-width:0">
+          <div class="item-bc">${bc}</div>
+          ${unosT?`<div style="font-size:.64rem;color:var(--text3);margin-top:1px">${unosT}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0">
+          <div class="item-dt">${fmtD(item.expiryDate)}</div>
+          ${item.hasDiscount?`<span class="badge badge-d">-${item.discountDays}d</span>`:`<span class="badge badge-n">Bez</span>`}
+        </div>
+      </div>`;
     }).join('');
   }
 };
@@ -1199,7 +1222,19 @@ const Cam={
 /* ===== EDIT ===== */
 const Edit={
   _id:null,
-  open(id){this._id=id;const item=items.find(i=>i.id===id);if(!item)return;document.getElementById('ed-bc').value=item.barcode;document.getElementById('ed-date').value=item.expiryDate;document.getElementById('ed-disc').value=item.hasDiscount?'1':'0';document.getElementById('ed-days').value=item.discountDays||'5';this.togDays();document.getElementById('edit-overlay').classList.add('open');},
+  open(id){
+    this._id=id;const item=items.find(i=>i.id===id);if(!item)return;
+    document.getElementById('ed-bc').value=item.barcode;
+    document.getElementById('ed-date').value=item.expiryDate;
+    document.getElementById('ed-disc').value=item.hasDiscount?'1':'0';
+    document.getElementById('ed-days').value=item.discountDays||'5';
+    const cel=document.getElementById('ed-created');
+    const cvl=document.getElementById('ed-created-val');
+    if(cel&&cvl){
+      if(item.createdAt){cvl.textContent=fmtDT(item.createdAt);cel.style.display='block';}
+      else cel.style.display='none';
+    }
+    this.togDays();document.getElementById('edit-overlay').classList.add('open');},
   togDays(){document.getElementById('ed-drow').classList.toggle('hidden',document.getElementById('ed-disc').value!=='1');},
   async save(){const bc=document.getElementById('ed-bc').value.trim(),ed=document.getElementById('ed-date').value;if(!bc||!ed){toast('Popunite polja!','err');return;}const hd=document.getElementById('ed-disc').value==='1';const dd=hd?parseInt(document.getElementById('ed-days').value):null;await DB.upd(session.sid,this._id,{barcode:bc,expiryDate:ed,hasDiscount:hd,discountDays:dd,discountDate:hd?subDays(ed,dd):null});UI.cl('edit-overlay');toast('✓ Izmjena sačuvana','ok');},
   async del(){Confirm.show('Obrisati ovaj artikal?',async()=>{await DB.rm(session.sid,this._id);UI.cl('edit-overlay');toast('Artikal obrisan','ok');},'🗑️ Obriši');}
