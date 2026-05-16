@@ -199,6 +199,21 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 @keyframes fadeSlide{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 .anim{animation:fadeSlide .2s ease both;}
 
+.notif-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 11px;border-radius:8px;margin-bottom:8px;
+  background:var(--warn-bg);border:1px solid var(--accent-border);
+  font-size:.76rem;font-weight:600;color:var(--text2);
+  animation:fadeSlide .3s ease both;
+}
+.notif-bar .nb-items{flex:1;display:flex;flex-wrap:wrap;gap:6px;}
+.notif-bar .nb-chip{padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700;}
+.notif-bar .nb-chip.red{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger);}
+.notif-bar .nb-chip.ora{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn);}
+.notif-bar .nb-chip.acc{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border);}
+.notif-bar .nb-x{flex-shrink:0;opacity:.5;cursor:pointer;font-size:.8rem;padding:2px 4px;}
+.notif-bar .nb-x:hover{opacity:1;}
+
 /* =====================================================
    PC LAYOUT — ekrani širi od 900px
    ===================================================== */
@@ -397,6 +412,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   </div>
 </header>
 <div class="main">
+  <div id="notif-area"></div>
   <div class="card">
     <div class="card-hdr">📥 Novi unos artikla</div>
     <div class="steps-row"><div class="step-seg active" id="seg1"></div><div class="step-seg" id="seg2"></div><div class="step-seg" id="seg3"></div><div class="step-seg" id="seg4"></div></div>
@@ -424,7 +440,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div id="s4" class="hidden anim">
       <div class="item-chip"><span>Barkod:</span><span class="chip-val" id="chip-bc3"></span><span style="color:var(--border)">|</span><span>Ističe:</span><span class="chip-val" id="chip-dt2"></span></div>
       <div class="step-label">Korak 4 — Broj dana sniženja</div>
-      <select id="disc-days" style="margin-bottom:10px"><option value="">— Izaberite broj dana —</option><option value="5">5 dana</option><option value="7">7 dana</option><option value="15">15 dana</option><option value="20">20 dana</option><option value="30">30 dana</option></select>
+      <select id="disc-days" style="margin-bottom:10px"><option value="">— Izaberite broj dana —</option><option value="5">5 dana</option><option value="7">7 dana</option><option value="10">10 dana</option><option value="15">15 dana</option><option value="20">20 dana</option><option value="30">30 dana</option></select>
       <button class="btn btn-primary btn-full" onclick="Steps.confirmDays()">✓ Sačuvaj i nastavi</button>
       <button class="btn btn-ghost btn-full mt8" onclick="Steps.go(3)">← Nazad</button>
     </div>
@@ -554,7 +570,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="frow"><label class="flbl">Barkod</label><input type="text" id="ed-bc" inputmode="numeric"></div>
   <div class="frow"><label class="flbl">Datum isteka</label><input type="date" id="ed-date"></div>
   <div class="frow"><label class="flbl">Sniženje</label><select id="ed-disc" onchange="Edit.togDays()"><option value="0">Ne</option><option value="1">Da</option></select></div>
-  <div class="frow hidden" id="ed-drow"><label class="flbl">Broj dana</label><select id="ed-days"><option value="5">5 dana</option><option value="7">7 dana</option><option value="15">15 dana</option><option value="20">20 dana</option><option value="30">30 dana</option></select></div>
+  <div class="frow hidden" id="ed-drow"><label class="flbl">Broj dana</label><select id="ed-days"><option value="5">5 dana</option><option value="7">7 dana</option><option value="10">10 dana</option><option value="15">15 dana</option><option value="20">20 dana</option><option value="30">30 dana</option></select></div>
   <hr class="divider">
   <div class="btn-row">
     <button class="btn btn-primary" style="flex:1" onclick="Edit.save()">💾 Sačuvaj</button>
@@ -1093,6 +1109,47 @@ const List={
     }).join('');
   }
 };
+/* ===== OBAVEŠTENJA — kompaktna, jednom po sesiji ===== */
+const Notif={
+  _key:'knjiga-notif-'+today(), // resetuje se svaki dan
+  show(){
+    const area=document.getElementById('notif-area');
+    if(!area)return;
+    // Prikaži samo jednom po sesiji/danu
+    if(sessionStorage.getItem(this._key))return;
+    area.innerHTML='';
+    const t=today(),tmr=tomorrow();
+    const expN=items.filter(i=>i.expiryDate<t).length;
+    const todN=items.filter(i=>i.expiryDate===t).length;
+    const tmrN=items.filter(i=>i.expiryDate===tmr).length;
+    if(!expN&&!todN&&!tmrN)return; // nema ništa - ne prikazuj
+    let chips='';
+    if(expN>0)chips+=`<span class="nb-chip red" onclick="List.filter('expired',document.querySelectorAll('.fbtn')[3])">🔴 ${expN} isteklo</span>`;
+    if(todN>0)chips+=`<span class="nb-chip ora" onclick="List.filter('today',document.querySelectorAll('.fbtn')[2])">🟠 ${todN} danas</span>`;
+    if(tmrN>0)chips+=`<span class="nb-chip acc" onclick="Notif._filterTmr()">📅 ${tmrN} sutra</span>`;
+    area.innerHTML=`<div class="notif-bar">
+      <span style="font-size:.8rem;flex-shrink:0">⚠️</span>
+      <div class="nb-items">${chips}</div>
+      <span class="nb-x" onclick="Notif.dismiss()">✕</span>
+    </div>`;
+    // Auto-dismiss posle 10 sekundi
+    this._t=setTimeout(()=>this.dismiss(),10000);
+  },
+  _filterTmr(){
+    const tmr=tomorrow();
+    const inp=document.getElementById('date-filter-input');
+    if(inp)inp.value=tmr;
+    List.dateFilter(tmr);
+  },
+  dismiss(){
+    clearTimeout(this._t);
+    sessionStorage.setItem(this._key,'1');
+    const area=document.getElementById('notif-area');
+    if(area)area.innerHTML='';
+  },
+  clear(){const a=document.getElementById('notif-area');if(a)a.innerHTML='';}
+};
+
 const Stats={upd(){
   const t=today(),tmr=tomorrow();
   document.getElementById('sn-total').textContent=items.length;
@@ -1104,6 +1161,7 @@ const Stats={upd(){
     tmrEl.textContent=n;
     tmrEl.style.color=n>0?'var(--danger)':'var(--accent)';
   }
+  Notif.show();
 }};
 
 /* ===== CAMERA ===== */
@@ -1154,8 +1212,8 @@ const Export={
   async go(){
     const date=document.getElementById('exp-dp').value;if(!date){toast('Izaberite datum!','err');return;}
     const s=stores.find(x=>x.id===session.sid);let rows,headers,fn;
-    if(this._t==='expiry'){const f=items.filter(i=>i.expiryDate===date);if(!f.length){toast('Nema artikala!','err');return;}headers=['Barkod','Datum isteka roka'];rows=f.map(i=>[i.barcode,fmtD(i.expiryDate)]);fn=`isteci_${s?.name||''}_${date}.xlsx`;}
-    else{const f=items.filter(i=>i.hasDiscount&&i.discountDate===date);if(!f.length){toast('Nema artikala za sniženje!','err');return;}headers=['Barkod','Datum sniženja','Datum isteka roka'];rows=f.map(i=>[i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]);fn=`snizenje_${s?.name||''}_${date}.xlsx`;}
+    if(this._t==='expiry'){const f=items.filter(i=>i.expiryDate===date);if(!f.length){toast('Nema artikala!','err');return;}headers=['Barkod','Datum isteka roka'];rows=f.map(i=>[i.barcode,fmtD(i.expiryDate)]);fn=`isteci_${s?.name||''}_${date}_(${rows.length}art).xlsx`;}
+    else{const f=items.filter(i=>i.hasDiscount&&i.discountDate===date);if(!f.length){toast('Nema artikala za sniženje!','err');return;}headers=['Barkod','Datum sniženja','Datum isteka roka'];rows=f.map(i=>[i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]);fn=`snizenje_${s?.name||''}_${date}_(${rows.length}art).xlsx`;}
     await xlsxWrite(headers,rows,fn);UI.cl('exp-overlay');toast(`✓ Izvezeno ${rows.length} artikala`,'ok');
   }
 };
@@ -1163,7 +1221,7 @@ const Export={
 /* ===== BACKUP ===== */
 const Backup={
   json(){const s=stores.find(x=>x.id===session.sid);const b=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`backup_${s?.name||session.sid}_${today()}.json`;a.click();toast('✓ JSON backup','ok');},
-  async excel(){if(!items.length){toast('Nema podataka!','err');return;}const s=stores.find(x=>x.id===session.sid);await xlsxWrite(['Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'],items.map(i=>[i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtD(i.discountDate):'',i.discountDays||'']),`svi_${s?.name||''}_${today()}.xlsx`);toast(`✓ Izvezeno ${items.length}`,'ok');},
+  async excel(){if(!items.length){toast('Nema podataka!','err');return;}const s=stores.find(x=>x.id===session.sid);await xlsxWrite(['Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'],items.map(i=>[i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtD(i.discountDate):'',i.discountDays||'']),`svi_${s?.name||''}_${today()}_(${items.length}art).xlsx`);toast(`✓ Izvezeno ${items.length}`,'ok');},
   trigImport(){document.getElementById('imp-file').click();},
   async importJSON(ev){
     const f=ev.target.files[0];if(!f)return;
@@ -1301,7 +1359,7 @@ const AE={
     if(this._t==='expiry'){h=multi?['Prodavnica','Barkod','Datum isteka']:['Barkod','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.expiryDate)]:[i.barcode,fmtD(i.expiryDate)]);}
     else if(this._t==='discount'){h=multi?['Prodavnica','Barkod','Datum sniženja','Datum isteka']:['Barkod','Datum sniženja','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]:[i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]);}
     else{h=multi?['Prodavnica','Barkod','Datum isteka','Sniženje']:['Barkod','Datum isteka','Sniženje'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne']:[i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne']);}
-    await xlsxWrite(h,r,`admin_izvoz_${today()}.xlsx`);UI.cl('adm-exp-overlay');toast(`✓ Izvezeno ${allRows.length} artikala`,'ok');
+    await xlsxWrite(h,r,`admin_izvoz_${today()}_(${allRows.length}art).xlsx`);UI.cl('adm-exp-overlay');toast(`✓ Izvezeno ${allRows.length} artikala`,'ok');
   }
 };
 
@@ -1320,7 +1378,7 @@ const TE={
     if(this._t==='expiry'){h=multi?['Prodavnica','Barkod','Datum isteka']:['Barkod','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.expiryDate)]:[i.barcode,fmtD(i.expiryDate)]);}
     else if(this._t==='discount'){h=multi?['Prodavnica','Barkod','Datum sniženja','Datum isteka']:['Barkod','Datum sniženja','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]:[i.barcode,fmtD(i.discountDate),fmtD(i.expiryDate)]);}
     else{h=multi?['Prodavnica','Barkod','Datum isteka']:['Barkod','Datum isteka'];r=allRows.map(i=>multi?[i._s,i.barcode,fmtD(i.expiryDate)]:[i.barcode,fmtD(i.expiryDate)]);}
-    await xlsxWrite(h,r,`teren_${session.tname||''}_${today()}.xlsx`);UI.cl('trn-exp-overlay');toast(`✓ Izvezeno ${allRows.length}`,'ok');
+    await xlsxWrite(h,r,`teren_${session.tname||''}_${today()}_(${allRows.length}art).xlsx`);UI.cl('trn-exp-overlay');toast(`✓ Izvezeno ${allRows.length}`,'ok');
   }
 };
 
@@ -1432,7 +1490,7 @@ const FullBackup={
         its.forEach(i=>rows.push([tName,s.name,i.barcode,fmtD(i.expiryDate),i.hasDiscount?'Da':'Ne',i.discountDate?fmtD(i.discountDate):'',i.discountDays||'']));
       }
       if(!rows.length){toast('Nema stavki!','err');return;}
-      await xlsxWrite(['Teren','Prodavnica','Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'],rows,'knjiga_rokova_SVE_'+today()+'.xlsx');
+      await xlsxWrite(['Teren','Prodavnica','Barkod','Datum isteka','Sniženje','Datum sniženja','Dana'],rows,'knjiga_rokova_SVE_'+today()+'_('+rows.length+'art).xlsx');
       toast('✓ Izvezeno '+rows.length+' stavki iz '+allS.length+' prodavnica','ok');
     }catch(e){toast('Greška!','err');console.error(e);}
   },
@@ -1637,8 +1695,8 @@ window.addEventListener('unhandledrejection',e=>{
 
 function _resumeSession(){
   Undo.loadFromStorage();
-  // PWA Service Worker registracija
-  if('serviceWorker' in navigator){
+  // PWA Service Worker - samo na GitHub Pages originu
+  if('serviceWorker' in navigator && location.hostname.includes('github.io')){
     navigator.serviceWorker.register('/Knjiga-rokova/sw.js')
       .then(reg=>console.log('[SW] Registrovan, scope:',reg.scope))
       .catch(err=>console.warn('[SW] Registracija neuspela:',err));
