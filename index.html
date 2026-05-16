@@ -334,6 +334,16 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   .numpad{max-width:280px;margin:8px auto;}
   .nk{padding:10px;}
 }
+
+/* ===== STORE STATS POPUP ===== */
+.store-popup-tabs{display:flex;gap:6px;margin-bottom:12px;}
+.store-popup-tab{flex:1;padding:7px;background:var(--bg2);border:1.5px solid var(--border);border-radius:8px;font-family:var(--ff-b);font-size:.78rem;font-weight:700;cursor:pointer;text-align:center;color:var(--text2);transition:all .18s;}
+.store-popup-tab.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.chart-wrap{background:var(--bg2);border-radius:10px;padding:10px 6px 6px;margin-bottom:8px;}
+.chart-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.chart-chip{padding:4px 10px;border-radius:20px;font-size:.72rem;font-weight:700;background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border);}
+.chart-chip.zero{background:var(--bg3);color:var(--text3);border-color:var(--border);}
+.chart-lbl{font-size:.68rem;color:var(--text3);text-align:center;margin-top:4px;}
 </style>
 </head>
 <body>
@@ -1305,11 +1315,127 @@ const SuperAdmin={
   openTerrain(tid){
     const tr=terrains.find(x=>x.id===tid);const ss=stores.filter(s=>s.terrainId===tid);const t=today();
     let html=`<div style="font-size:.78rem;color:var(--text3);margin-bottom:9px">${esc(tr.name)} — ${ss.length} objekat(a)</div>`;
-    html+=ss.map(s=>{const si=adminData[s.id]||[];const tod=si.filter(i=>i.expiryDate===t).length;const exp=si.filter(i=>i.expiryDate<t).length;return`<div class="cfg-row"><div class="cfg-row-main"><div class="cfg-row-name">${esc(s.name)} <span style="font-size:.68rem;font-weight:400;color:var(--text3)">${si.length} stavki${tod>0?` · <span style="color:var(--danger)">${tod} danas</span>`:''}${exp>0?` · <span style="color:var(--danger)">${exp} isteklo</span>`:''}</span></div><div class="cfg-row-sub">${esc(s.email)}</div></div></div>`;}).join('');
+    html+=ss.map(s=>{const si=adminData[s.id]||[];const tod=si.filter(i=>i.expiryDate===t).length;const exp=si.filter(i=>i.expiryDate<t).length;return`<div class="cfg-row" style="cursor:pointer" onclick="StoreStats.open('${s.id}','${esc(s.name).replace(/'/g,"&apos;")}','${esc(s.email).replace(/'/g,"&apos;")}',adminData['${s.id}']||[])" title="Klikni za detalje i statistiku"><div class="cfg-row-main"><div class="cfg-row-name">${esc(s.name)} <span style="font-size:.68rem;font-weight:400;color:var(--text3)">${si.length} stavki${tod>0?` · <span style="color:var(--danger)">${tod} danas</span>`:''}${exp>0?` · <span style="color:var(--danger)">${exp} isteklo</span>`:''}</span></div><div class="cfg-row-sub">${esc(s.email)} &nbsp;·&nbsp; <span style="color:var(--accent)">📊 klikni za statistiku</span></div></div></div>`;}).join('');
     if(!ss.length)html='<div class="empty-state"><div class="empty-ico">🏪</div>Nema objekata u terenu</div>';
     const ov=document.createElement('div');ov.className='overlay open';ov.style.zIndex='600';
     ov.innerHTML=`<div class="modal"><div class="modal-title">🏔️ ${esc(tr.name)}</div>${html}<button class="btn btn-ghost btn-full mt8" onclick="this.closest('.overlay').remove()">Zatvori</button></div>`;
     ov.onclick=e=>{if(e.target===ov)ov.remove();};document.body.appendChild(ov);
+  }
+};
+
+/* ===== STORE STATS — dnevni dijagram unosa ===== */
+const StoreStats={
+
+  // Dnevni podaci za poslednjih N dana (na osnovu createdAt)
+  getDailyStats(items, days=15){
+    const result=[];
+    for(let i=days-1;i>=0;i--){
+      const d=new Date();d.setDate(d.getDate()-i);
+      const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const count=items.filter(x=>x.createdAt&&x.createdAt.startsWith(ds)).length;
+      result.push({date:ds,count});
+    }
+    return result;
+  },
+
+  // SVG bar chart
+  renderChart(daily){
+    const W=340,H=150,pL=28,pR=6,pT=22,pB=38;
+    const cW=W-pL-pR,cH=H-pT-pB,n=daily.length;
+    const maxC=Math.max(...daily.map(d=>d.count),1);
+    const bW=Math.floor(cW/n)-2;
+    let bars='',vals='',lbls='';
+    daily.forEach((d,i)=>{
+      const x=pL+i*(cW/n)+1;
+      const bH=d.count>0?Math.max(5,Math.round((d.count/maxC)*cH)):2;
+      const y=pT+cH-bH;
+      const hi=d.count>0&&d.count===maxC;
+      const col=d.count===0?'var(--border2)':hi?'var(--accent)':'var(--accent-border)';
+      bars+=`<rect x="${x}" y="${y}" width="${bW}" height="${bH}" fill="${col}" rx="2"/>`;
+      if(d.count>0)vals+=`<text x="${x+bW/2}" y="${y-3}" text-anchor="middle" font-size="9" fill="var(--accent)" font-weight="bold">${d.count}</text>`;
+      // Labela svakog 3. dana + poslednji
+      if(i%3===0||i===n-1){
+        const lbl=d.date.slice(8)+'.'+d.date.slice(5,7)+'.';
+        lbls+=`<text x="${x+bW/2}" y="${H-5}" text-anchor="middle" font-size="8" fill="var(--text3)">${lbl}</text>`;
+      }
+    });
+    // Grid linije
+    let grid='';
+    for(let g=1;g<=4;g++){
+      const gy=pT+cH-(g/4)*cH;
+      const gv=Math.round((g/4)*maxC);
+      grid+=`<line x1="${pL}" y1="${gy}" x2="${W-pR}" y2="${gy}" stroke="var(--border2)" stroke-width="1" stroke-dasharray="3,3"/>`;
+      grid+=`<text x="${pL-3}" y="${gy+3}" text-anchor="end" font-size="8" fill="var(--text3)">${gv}</text>`;
+    }
+    return`<svg width="100%" viewBox="0 0 ${W} ${H}" style="overflow:visible;display:block">
+      ${grid}
+      <line x1="${pL}" y1="${pT}" x2="${pL}" y2="${pT+cH}" stroke="var(--border)" stroke-width="1"/>
+      <line x1="${pL}" y1="${pT+cH}" x2="${W-pR}" y2="${pT+cH}" stroke="var(--border)" stroke-width="1"/>
+      ${bars}${vals}${lbls}
+    </svg>`;
+  },
+
+  // Otvori popup za objekat sa tabovima
+  open(sid, sname, semail, sitems){
+    const t=today();
+    const daily=this.getDailyStats(sitems);
+    const total15=daily.reduce((s,d)=>s+d.count,0);
+    const activeDays=daily.filter(d=>d.count>0).length;
+    const maxDay=daily.reduce((a,b)=>b.count>a.count?b:a,{count:0,date:''});
+    const todN=sitems.filter(i=>i.expiryDate===t).length;
+    const expN=sitems.filter(i=>i.expiryDate<t).length;
+
+    // Tab 1: Lista stavki (readonly)
+    const listHTML=sitems.length
+      ?sitems.sort((a,b)=>a.expiryDate.localeCompare(b.expiryDate)).map(item=>{
+          let cls='item-row ro';
+          if(item.expiryDate<t)cls+=' expired';else if(item.expiryDate===t)cls+=' expiring';
+          const unosT=item.createdAt?`<div style="font-size:.63rem;color:var(--text3)">🕐 ${fmtDT(item.createdAt)}</div>`:'';
+          return`<div class="${cls}">
+            <div style="flex:1;min-width:0"><div class="item-bc">${esc(item.barcode)}</div>${unosT}</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">
+              <div class="item-dt">${fmtD(item.expiryDate)}</div>
+              ${item.hasDiscount?`<span class="badge badge-d">-${item.discountDays}d</span>`:`<span class="badge badge-n">Bez</span>`}
+            </div>
+          </div>`;
+        }).join('')
+      :'<div class="empty-state"><div class="empty-ico">📦</div>Nema stavki</div>';
+
+    // Tab 2: Statistika
+    const chartHTML=`
+      <div class="chart-summary">
+        <span class="chart-chip${total15===0?' zero':''}">📥 ${total15} unosa / 15 dana</span>
+        <span class="chart-chip${activeDays===0?' zero':''}">📆 ${activeDays} aktivnih dana</span>
+        ${maxDay.count>0?`<span class="chart-chip">🏆 Max: ${maxDay.count} (${fmtD(maxDay.date)})</span>`:''}
+        ${todN>0?`<span class="chart-chip" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger)">🟠 ${todN} ističe danas</span>`:''}
+        ${expN>0?`<span class="chart-chip" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger)">🔴 ${expN} isteklo</span>`:''}
+      </div>
+      <div class="chart-wrap">${this.renderChart(daily)}</div>
+      <div class="chart-lbl">Broj unosa po danu — poslednjih 15 dana</div>`;
+
+    // Modal sa tabovima
+    const ov=document.createElement('div');
+    ov.className='overlay open';ov.style.zIndex='600';
+    ov.innerHTML=`<div class="modal" style="max-height:88vh">
+      <div class="modal-title">🏪 ${esc(sname)}</div>
+      <div style="font-size:.72rem;color:var(--text3);margin-bottom:10px">${esc(semail||'')} &nbsp;|&nbsp; ${sitems.length} stavki ukupno</div>
+      <div class="store-popup-tabs">
+        <button class="store-popup-tab on" id="_tab_list" onclick="StoreStats._tab('list')">📋 Stavke (${sitems.length})</button>
+        <button class="store-popup-tab" id="_tab_stats" onclick="StoreStats._tab('stats')">📊 Statistika</button>
+      </div>
+      <div id="_panel_list" style="max-height:340px;overflow-y:auto">${listHTML}</div>
+      <div id="_panel_stats" class="hidden">${chartHTML}</div>
+      <button class="btn btn-ghost btn-full mt8" onclick="this.closest('.overlay').remove()">Zatvori</button>
+    </div>`;
+    ov.onclick=e=>{if(e.target===ov)ov.remove();};
+    document.body.appendChild(ov);
+  },
+
+  _tab(t){
+    document.getElementById('_tab_list').classList.toggle('on',t==='list');
+    document.getElementById('_tab_stats').classList.toggle('on',t==='stats');
+    document.getElementById('_panel_list').classList.toggle('hidden',t!=='list');
+    document.getElementById('_panel_stats').classList.toggle('hidden',t!=='stats');
   }
 };
 
@@ -1334,11 +1460,10 @@ const TerrainAdmin={
     document.getElementById('ta-str').textContent=ss.length;document.getElementById('ta-tot').textContent=tot;document.getElementById('ta-tod').textContent=todN;document.getElementById('ta-disc').textContent=discN;
   },
   openStore(sid){
-    const s=stores.find(x=>x.id===sid);const si=adminData[sid]||[];const t=today();
-    const rows=si.length?si.sort((a,b)=>a.expiryDate.localeCompare(b.expiryDate)).map(item=>{let cls='item-row ro';if(item.expiryDate<t)cls+=' expired';else if(item.expiryDate===t)cls+=' expiring';return`<div class="${cls}"><div class="item-bc">${esc(item.barcode)}</div><div class="item-dt">${fmtD(item.expiryDate)}</div>${item.hasDiscount?`<span class="badge badge-d">-${item.discountDays}d</span>`:`<span class="badge badge-n">Bez</span>`}</div>`;}).join(''):'<div class="empty-state"><div class="empty-ico">📦</div>Nema stavki</div>';
-    const ov=document.createElement('div');ov.className='overlay open';ov.style.zIndex='600';
-    ov.innerHTML=`<div class="modal"><div class="modal-title">🏪 ${esc(s.name)}</div><div style="font-size:.72rem;color:var(--text3);margin-bottom:9px">${esc(s.email)}</div><div class="list-wrap" style="max-height:290px">${rows}</div><button class="btn btn-ghost btn-full mt8" onclick="this.closest('.overlay').remove()">Zatvori</button></div>`;
-    ov.onclick=e=>{if(e.target===ov)ov.remove();};document.body.appendChild(ov);
+    const s=stores.find(x=>x.id===sid);
+    if(!s)return;
+    const sitems=adminData[sid]||[];
+    StoreStats.open(sid,s.name,s.email,sitems);
   }
 };
 
