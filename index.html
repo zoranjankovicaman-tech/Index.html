@@ -268,6 +268,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   /* Lista visina na PC */
   .list-wrap{max-height:none;height:calc(100vh - 340px);min-height:200px;}
 
+  /* Kamera dugme — skriveno na PC (sve rucno) */
+  #cam-open-btn{display:none;}
+
+  /* Datum unos — PC verzija (dd/mm/yyyy), mobilna skrivena */
+  .mobile-date{display:none;}
+  .pc-date{display:block!important;}
+
   /* Veći input u wizardu na PC */
   #wizard-card input[type="text"],#wizard-card input[type="date"]{font-size:1rem;padding:11px 14px;}
   #wizard-card .btn{padding:12px 16px;font-size:.92rem;}
@@ -514,14 +521,19 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
                inputmode="decimal" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                onkeydown="if(event.key==='Enter')Steps.confirmBarcode()">
         <button class="btn-scan" id="plu-btn" onclick="Steps.togglePLU()" title="PLU / Tezinski artikal — dodaje + prefiks" style="background:var(--bg2);border:1.5px solid var(--border);color:var(--text2);font-size:.75rem;font-weight:700;white-space:nowrap;padding:0 9px">PLU +</button>
-        <button class="btn-scan" onclick="Cam.open()">📷</button>
+        <button class="btn-scan" id="cam-open-btn" onclick="Cam.open()">📷</button>
       </div>
       <button class="btn btn-primary btn-full" onclick="Steps.confirmBarcode()">✓ Potvrdi barkod</button>
     </div>
     <div id="s2" class="hidden anim">
       <div class="item-chip"><span>Barkod:</span><span class="chip-val" id="chip-bc"></span></div>
       <div class="step-label">Korak 2 — Datum isteka roka</div>
-      <input type="date" id="exp-date" style="margin-bottom:10px" onkeydown="if(event.key==='Enter')Steps.confirmDate()">
+      <input type="date" id="exp-date" class="mobile-date" style="margin-bottom:10px">
+        <input type="text" id="exp-date-pc" class="pc-date" 
+               placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric"
+               autocomplete="off" style="margin-bottom:10px;display:none;letter-spacing:.05em"
+               oninput="Steps.pcDateInput(this)"
+               onkeydown="if(event.key==='Enter')Steps.confirmDate()">
       <button class="btn btn-primary btn-full" onclick="Steps.confirmDate()">✓ Potvrdi datum</button>
       <button class="btn btn-ghost btn-full mt8" onclick="Steps.go(1)">← Nazad</button>
     </div>
@@ -1229,7 +1241,13 @@ const Steps={
     // Auto-fokus na aktivni input
     setTimeout(()=>{
       if(n===1){const i=document.getElementById('bc-input');if(i)i.focus();}
-      if(n===2){const i=document.getElementById('exp-date');if(i)i.focus();}
+      if(n===2){
+      // Na PC fokusiraj text input, na mobilnom nativni
+      const pcInp=document.getElementById('exp-date-pc');
+      const natInp=document.getElementById('exp-date');
+      if(window.innerWidth>=900&&pcInp){pcInp.focus();}
+      else if(natInp){natInp.focus();}
+    }
     },120);
   },
   _pluActive:false,
@@ -1260,12 +1278,50 @@ const Steps={
       if(!valid)toast('⚠️ Barkod možda neispravan (EAN-13 checksum greška)','err');
     }
     cBC=v;['chip-bc','chip-bc2','chip-bc3'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=v;});
-    document.getElementById('exp-date').value=today();this.go(2);
+    const _td=today();document.getElementById('exp-date').value=_td;this._syncPCDate(_td);this.go(2);
   },
   confirmDate(){
-    const v=document.getElementById('exp-date').value;if(!v){toast('Izaberite datum!','err');return;}
+    // Na PC čita iz native input koji je sinhronizovan sa PC text inputom
+    const v=document.getElementById('exp-date').value;
+    if(!v){toast('Unesite datum! (dd/mm/yyyy)','err');return;}
     cDate=v;['chip-dt','chip-dt2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fmtD(v);});
     if(bulkMode){this._save(false,null);}else{this.go(3);}
+  },
+  pcDateInput(inp){
+    // Auto-formatiranje dd/mm/yyyy dok korisnik kuca
+    let digits=inp.value.replace(/\D/g,'').substring(0,8);
+    let fmt='';
+    if(digits.length>0)fmt=digits.substring(0,2);
+    if(digits.length>2)fmt+='/'+digits.substring(2,4);
+    if(digits.length>4)fmt+='/'+digits.substring(4,8);
+    inp.value=fmt;
+    // Sinhronizuj native input kad je datum kompletan (8 cifara)
+    const native=document.getElementById('exp-date');
+    if(digits.length>=8&&native){
+      const dd=digits.substring(0,2),mm=digits.substring(2,4),yyyy=digits.substring(4,8);
+      const parsed=new Date(parseInt(yyyy),parseInt(mm)-1,parseInt(dd));
+      if(!isNaN(parsed.getTime())&&parsed.getFullYear()==parseInt(yyyy)){
+        native.value=`${yyyy}-${mm}-${dd}`;
+        inp.style.borderColor='var(--success)';
+      } else {
+        native.value='';
+        inp.style.borderColor='var(--danger)';
+      }
+    } else if(native){
+      native.value='';
+      inp.style.borderColor='';
+    }
+  },
+  _syncPCDate(isoDate){
+    // Popuni PC text input iz ISO datuma (yyyy-mm-dd)
+    const pc=document.getElementById('exp-date-pc');
+    if(pc&&isoDate){
+      const [y,m,d]=isoDate.split('-');
+      pc.value=`${d}/${m}/${y}`;
+      pc.style.borderColor='';
+    } else if(pc){
+      pc.value='';
+    }
   },
   setDiscount(h){if(!h){this._save(false,null);}else{document.getElementById('disc-days').value='';this.go(4);}},
   confirmDays(){const d=document.getElementById('disc-days').value;if(!d){toast('Izaberite broj dana!','err');return;}this._save(true,parseInt(d));},
