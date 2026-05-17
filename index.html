@@ -538,10 +538,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <!-- PC: text input dd/mm/yyyy + calendar dugme -->
           <div class="pc-date" style="display:none;position:relative">
             <input type="text" id="exp-date-pc" placeholder="dd/mm/yyyy" maxlength="10"
-                   inputmode="numeric" autocomplete="off" style="padding-right:40px;letter-spacing:.06em"
-                   onfocus="this.select()"
-                   oninput="Steps.pcDateInput(this)"
-                   onkeydown="if(event.key==='Enter')Steps.confirmDate()">
+                   inputmode="numeric" autocomplete="off" style="padding-right:40px;letter-spacing:.08em"
+                   onfocus="Steps.pcFocus(this)"
+                   onkeydown="Steps.pcKey(this,event)"
+                   readonly>
             <button onclick="Steps.openCalendar()" tabindex="-1"
                     style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px;color:var(--accent)" title="Otvori kalendar">📅</button>
             <input type="date" id="exp-date-cal" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;right:0"
@@ -1256,11 +1256,12 @@ const Steps={
     setTimeout(()=>{
       if(n===1){const i=document.getElementById('bc-input');if(i)i.focus();}
       if(n===2){
-      // Na PC fokusiraj text input, na mobilnom nativni
       const pcInp=document.getElementById('exp-date-pc');
       const natInp=document.getElementById('exp-date');
-      if(window.innerWidth>=900&&pcInp){pcInp.focus();}
-      else if(natInp){natInp.focus();}
+      if(window.innerWidth>=900&&pcInp){
+        // Inituj masked input sa trenutnim datumom pa fokusiraj
+        setTimeout(()=>{pcInp.focus();},130);
+      } else if(natInp){natInp.focus();}
     }
     },120);
   },
@@ -1292,7 +1293,7 @@ const Steps={
       if(!valid)toast('⚠️ Barkod možda neispravan (EAN-13 checksum greška)','err');
     }
     cBC=v;['chip-bc','chip-bc2','chip-bc3'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=v;});
-    const _td=today();document.getElementById('exp-date').value=_td;this._syncPCDate(_td);this.go(2);
+    const _td=today();document.getElementById('exp-date').value=_td;this.initPCDate(_td);this.go(2);
   },
   confirmDate(){
     // Na PC čita iz native input koji je sinhronizovan sa PC text inputom
@@ -1301,38 +1302,119 @@ const Steps={
     cDate=v;['chip-dt','chip-dt2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fmtD(v);});
     if(bulkMode){this._save(false,null);}else{this.go(3);}
   },
-  pcDateInput(inp){
-    // Auto-formatiranje dd/mm/yyyy dok korisnik kuca
-    let digits=inp.value.replace(/\D/g,'').substring(0,8);
-    let fmt='';
-    if(digits.length>0)fmt=digits.substring(0,2);
-    if(digits.length>2)fmt+='/'+digits.substring(2,4);
-    if(digits.length>4)fmt+='/'+digits.substring(4,8);
-    inp.value=fmt;
-    // Sinhronizuj native input kad je datum kompletan (8 cifara)
-    const native=document.getElementById('exp-date');
-    if(digits.length>=8&&native){
-      const dd=digits.substring(0,2),mm=digits.substring(2,4),yyyy=digits.substring(4,8);
-      const parsed=new Date(parseInt(yyyy),parseInt(mm)-1,parseInt(dd));
-      if(!isNaN(parsed.getTime())&&parsed.getFullYear()==parseInt(yyyy)){
-        native.value=`${yyyy}-${mm}-${dd}`;
-        inp.style.borderColor='var(--success)';
-      } else {
-        native.value='';
-        inp.style.borderColor='var(--danger)';
-      }
-    } else if(native){
-      native.value='';
-      inp.style.borderColor='';
+  // ── Masked date input (PC) ──────────────────────────
+  _pcD:'',_pcM:'',_pcY:'',_pcS:0,_pcBuf:'',
+
+  initPCDate(iso){
+    if(iso){const [y,m,d]=iso.split('-');this._pcD=d;this._pcM=m;this._pcY=y;}
+    else{const t=today().split('-');this._pcD=t[2];this._pcM=t[1];this._pcY=t[0];}
+    this._pcS=0;this._pcBuf='';this._pcRefresh();
+  },
+
+  _pcRefresh(){
+    const inp=document.getElementById('exp-date-pc');if(!inp)return;
+    const dd=this._pcD||'dd',mm=this._pcM||'mm',yyyy=this._pcY||'yyyy';
+    inp.value=`${dd}/${mm}/${yyyy}`;
+    const ranges=[[0,2],[3,5],[6,10]];
+    const [s,e]=ranges[Math.min(this._pcS,2)];
+    setTimeout(()=>{try{inp.setSelectionRange(s,e);}catch(x){}},0);
+  },
+
+  _pcSyncNative(){
+    const d=this._pcD,m=this._pcM,y=this._pcY;
+    const inp=document.getElementById('exp-date-pc');
+    if(/^\d{2}$/.test(d)&&/^\d{2}$/.test(m)&&/^\d{4}$/.test(y)){
+      const native=document.getElementById('exp-date');
+      if(native)native.value=`${y}-${m}-${d}`;
+      if(inp)inp.style.borderColor='var(--success)';
+    } else {
+      if(inp)inp.style.borderColor='';
     }
   },
-  _syncPCDate(isoDate){
+
+  pcFocus(inp){this._pcS=0;this._pcBuf='';this._pcRefresh();},
+
+  _pcD:'',_pcM:'',_pcY:'',_pcS:0,_pcBuf:'',
+
+  initPCDate(iso){
+    if(iso&&/^\d{4}-\d{2}-\d{2}$/.test(iso)){
+      const [y,m,d]=iso.split('-');
+      this._pcD=d;this._pcM=m;this._pcY=y;
+    } else {
+      const t=today().split('-');
+      this._pcD=t[2];this._pcM=t[1];this._pcY=t[0];
+    }
+    this._pcS=0;this._pcBuf='';this._pcRefresh();
+  },
+
+  _pcRefresh(){
+    const inp=document.getElementById('exp-date-pc');if(!inp)return;
+    inp.value=`${this._pcD||'dd'}/${this._pcM||'mm'}/${this._pcY||'yyyy'}`;
+    const pos=[[0,2],[3,5],[6,10]][Math.min(this._pcS,2)];
+    setTimeout(()=>{try{inp.setSelectionRange(...pos);}catch(x){}},0);
+  },
+
+  _pcSync(){
+    const d=this._pcD,m=this._pcM,y=this._pcY;
+    const valid=/^\d{2}$/.test(d)&&/^\d{2}$/.test(m)&&/^\d{4}$/.test(y);
+    const native=document.getElementById('exp-date');
     const pc=document.getElementById('exp-date-pc');
-    if(pc&&isoDate){
-      const [y,m,d]=isoDate.split('-');
-      pc.value=`${d}/${m}/${y}`;
-      pc.style.borderColor='';
-    } else if(pc) pc.value='';
+    if(valid&&native)native.value=`${y}-${m}-${d}`;
+    if(pc)pc.style.borderColor=valid?'var(--success)':'';
+  },
+
+  pcFocus(){this._pcS=0;this._pcBuf='';this._pcRefresh();},
+
+  pcKey(inp,e){
+    if(e.key==='Enter'){e.preventDefault();Steps.confirmDate();return;}
+    if(e.key==='Tab'){if(this._pcS<2){e.preventDefault();this._pcNextSeg();}return;}
+    e.preventDefault();
+    const maxLen=[2,2,4];
+
+    if(/^[0-9]$/.test(e.key)){
+      this._pcBuf+=e.key;
+      // Prikaži buf padovan do dužine segmenta
+      const shown=this._pcBuf+(this._pcBuf.length<maxLen[this._pcS]?
+        (['dd','mm','yyyy'][this._pcS].slice(this._pcBuf.length)):'');
+      this._pcSetSeg(shown.slice(0,maxLen[this._pcS]));
+      this._pcRefresh();
+      if(this._pcBuf.length>=maxLen[this._pcS]){
+        this._pcSetSeg(this._pcBuf.slice(-maxLen[this._pcS]));
+        this._pcNextSeg();
+        this._pcSync();
+      }
+    } else if(e.key==='Backspace'){
+      if(this._pcBuf.length>0){
+        this._pcBuf=this._pcBuf.slice(0,-1);
+        const orig=['dd','mm','yyyy'][this._pcS];
+        const shown=this._pcBuf+orig.slice(this._pcBuf.length);
+        this._pcSetSeg(shown);
+      } else if(this._pcS>0){
+        this._pcS--;this._pcBuf='';
+      }
+      this._pcRefresh();
+    } else if(e.key==='/'||e.key==='.'||e.key==='ArrowRight'){
+      this._pcNextSeg();
+    } else if(e.key==='ArrowLeft'){
+      if(this._pcS>0){this._pcS--;this._pcBuf='';}this._pcRefresh();
+    }
+  },
+
+  _pcSetSeg(v){
+    if(this._pcS===0)this._pcD=v;
+    else if(this._pcS===1)this._pcM=v;
+    else this._pcY=v;
+  },
+
+  _pcNextSeg(){
+    if(this._pcS<2){this._pcS++;this._pcBuf='';}
+    this._pcRefresh();
+  },
+
+  pcDateInput(){},
+  _syncPCDate(isoDate){
+    if(isoDate)this.initPCDate(isoDate);
+    else{const pc=document.getElementById('exp-date-pc');if(pc)pc.value='';}
   },
   openCalendar(){
     const cal=document.getElementById('exp-date-cal');
